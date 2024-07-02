@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, send_file,request
+from flask import Flask, send_file,request,send_from_directory,render_template
 from pdf2docx import Converter
 from PyPDF2 import PdfReader,PdfWriter
 import pdfminer
@@ -12,7 +12,8 @@ def index():
 
 @app.route('/download',methods=['post'])
 def download():
-    return send_file('test.pdf',as_attachment=True)
+    files = list_files_in_directory('temp/')
+    return render_template('merge/merge.html', files=files)
 
 
 @app.route("/merge",methods=['post'])
@@ -37,8 +38,10 @@ def docx():
 def split():
     filename=request.files['file1']
     pageNo=request.form['pageNo']
+    get_file_details(filename)
     split_pdf(filename,pageNo)
-    return send_file('merge/merge.html')
+    files = list_files_in_directory('temp/')
+    return render_template('merge/merge.html', files=files)
     
 def todocx(filename):
 
@@ -76,9 +79,15 @@ def split_pdf(pdf,pageNo):
         i+=1
         pdf.close()
     
-
-
-
+def get_file_details(file):
+    ...
+def list_files_in_directory(directory_path):
+    try:
+        files = os.listdir(directory_path)
+        return files
+    except FileNotFoundError:
+        print(f"Directory not found: {directory_path}")
+        return []
 
 def main():
     app.run(port=int(os.environ.get('PORT', 80)))

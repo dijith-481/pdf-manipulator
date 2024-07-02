@@ -1,11 +1,14 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>Merge pdf</title>
-    </head>
-    <body>
-        <h2>Your pdf is ready</h2>
-        <form action="/download"  method="post" enctype="multipart/form-data">
-        <button type="submit">download</button>
-        </form>
-    </body>
+<head>
+    <title>Download Files</title>
+</head>
+<body>
+    <h2>Available Files:</h2>
+    <ul>
+        {% for file in files %}
+            <li><a href="{{ url_for('download_file', filename=file) }}">Download {{ file }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
 </html>
