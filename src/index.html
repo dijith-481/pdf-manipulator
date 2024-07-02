@@ -25,14 +25,26 @@
       </form>
     </div>
     <div>
-      <h2>convert to docx</h2>
-      <form action="/docx" method="post" enctype="multipart/form-data">
+      <h2>split</h2>
+      <form action="/split" method="post" enctype="multipart/form-data">
+        <div id="fileInputs">
+          <input type="file" name="file1" />
+          <input type="text" name="pageNo">
+        </div>
+        <button type="submit">upload</button>
+
+    
+      </form>
+    </div>
+
+    <div>
+      <h2>convert</h2>
+      <form id="convert" method="post" enctype="multipart/form-data">
         <div id="fileInputs">
           <input type="file" name="file1" />
         </div>
-        <button type="button" onclick="addFileInput()">addmore</button>
-        <button type="button" onclick="removeFileInput()">remove</button>
-        <button type="submit">upload</button>
+        <button type="button" onclick="setAction('/html')">Convert to HTML</button>
+        <button type="button" onclick="setAction('/docx')">Convert to DOCX</button>
 
     
       </form>
@@ -52,5 +64,9 @@
           fileInputs.removeChild(fileInputs.lastChild);
         }
       }
+      function setAction(action) {
+      document.getElementById('convert').action = action;
+      document.getElementById('convert').submit();
+    }
   </script>
 </html>

@@ -3,6 +3,7 @@ import os
 from flask import Flask, send_file,request
 from pdf2docx import Converter
 from PyPDF2 import PdfReader,PdfWriter
+import pdfminer
 app = Flask(__name__)
 
 @app.route("/")
@@ -11,7 +12,7 @@ def index():
 
 @app.route('/download',methods=['post'])
 def download():
-    return send_file('sample.docx',as_attachment=True)
+    return send_file('test.pdf',as_attachment=True)
 
 
 @app.route("/merge",methods=['post'])
@@ -32,7 +33,12 @@ def docx():
     merger.write('test.pdf')
     todocx('test.pdf')
     return send_file('merge/merge.html')
-    
+@app.route('/split',methods=['post'])
+def split():
+    filename=request.files['file1']
+    pageNo=request.form['pageNo']
+    split_pdf(filename,pageNo)
+    return send_file('merge/merge.html')
     
 def todocx(filename):
 
@@ -50,6 +56,29 @@ def  merge_pdf(pdfs):
         merger.append(PdfReader(pdf))
     merger.write('test.pdf')
     merger.close()
+def split_pdf(pdf,pageNo):
+    pageNo=pageNo.split(',')
+    pageNo=[int(i) for i in pageNo]
+    split=[]
+    
+    input_pdf=PdfReader(pdf)
+    prev=0
+    for splitNo in pageNo:
+        split.append(PdfWriter())
+        
+        for n in range(prev,splitNo):
+            split[-1].add_page(input_pdf.pages[n])
+        prev=splitNo
+    i=0        
+    for pdf in split:
+        
+        pdf.write(f'test{pageNo[i]}.pdf')
+        i+=1
+        pdf.close()
+    
+
+
+
 
 def main():
     app.run(port=int(os.environ.get('PORT', 80)))
