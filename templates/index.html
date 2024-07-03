@@ -4,13 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pdf Manipulator</title>
-    <link rel="stylesheet" href="../static/main.css">
+    <link rel="stylesheet" href="../static/output.css">
   </head>
 
   <body>
+    <h1 class="font-bold">hello</h1>
     <form  id="fileInput"  method="post" enctype="multipart/form-data">
       <div id="fileInputs">
-          <input type="file" name="file1" />
+          <input type="file" name="file1"class="file:mr-4 file:py-2 file:px-4
+          file:rounded-full file:border-0
+          file:text-sm file:font-semibold
+          file:bg-violet-50 file:text-violet-700
+          hover:file:bg-teal-100" />
       </div>
     </form>
     <div id="submit">
@@ -22,16 +27,8 @@
         <button type="button" onclick="removeFileInput()">remove</button>
     </div>
     <div>
-      <h2>split</h2>
-      <form action="/split" method="post" enctype="multipart/form-data">
-        <div id="fileInputs">
-          <input type="file" name="file1" />
-          <input type="text" name="pageNo">
-        </div>
-        <button type="submit">upload</button>
-
+      <h2 id="split">split</h2>
     
-      </form>
     </div>
 
     <div>

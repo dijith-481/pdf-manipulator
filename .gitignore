@@ -2,3 +2,4 @@
 .idx
 src/devserver.sh
 __pycache__
+node_modules

@@ -11,11 +11,18 @@
         if (fileInputs.children.length > 2) {
           fileInputs.removeChild(fileInputs.lastChild);
         }
-      }
+    }
+    function setSingleFileInput() {
+            const fileInputs = document.getElementById('fileInputs');
+            while (fileInputs.children.length > 1) {
+              fileInputs.removeChild(fileInputs.lastChild);
+            }}
+          
       function setAction(action) {
       document.getElementById('fileInput').action = action;
       
     }
+    
 
 function submitFile(){
       const form=document.getElementById('fileInput')
@@ -31,11 +38,11 @@ function submitFile(){
       }
     }
     const merge = document.getElementById('merge');
-    const split = document.getElementById('merge');
-    const convert = document.getElementById('merge');
-    const extract = document.getElementById('merge');
-merge.addEventListener('click', setAction('/merge'));
-merge.addEventListener('click', setAction('/merge'));
+    const split = document.getElementById('split');
+    const convert = document.getElementById('split');
+    const extract = document.getElementById('split');
+merge.addEventListener('click',addFileInput, setAction('/merge'));
+split.addEventListener('click',setSingleFileInput, setAction('/split'),setSingleFileInput());
 merge.addEventListener('click', setAction('/merge'));
 merge.addEventListener('click', setAction('/merge'));
 
