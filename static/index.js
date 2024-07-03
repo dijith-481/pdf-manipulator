@@ -1,11 +1,19 @@
 
-    function addFileInput() {
-      const fileInputs = document.getElementById('fileInputs');
-      const newInput = document.createElement('input');
-      newInput.type = 'file';
-      newInput.name = 'file' + (fileInputs.children.length + 1); 
-      fileInputs.appendChild(newInput);
+function addFileInput() {
+  const fileInputs = document.getElementById('fileInputs');
+  const fileNumber = fileInputs.children.length + 1;
+ 
+  const customHTML = `
+  <input type="file" name="file${fileNumber}" class="file:mr-6 file:py-2 file:px-4
+    file:rounded-full file:border-0
+    file:text-sm file:font-semibold
+    file:bg-teal-100 file:text-teal-700 
+    hover:file:bg-teal-300" />
+    `;
+    fileInputs.insertAdjacentHTML('beforeend', customHTML); 
     }
+
+
     function removeFileInput() {
         const fileInputs = document.getElementById('fileInputs');
         if (fileInputs.children.length > 2) {

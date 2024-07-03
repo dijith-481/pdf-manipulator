@@ -5,44 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pdf Manipulator</title>
     <link rel="stylesheet" href="../static/output.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   </head>
 
   <body>
-    <h1 class="font-bold">hello</h1>
     <form  id="fileInput"  method="post" enctype="multipart/form-data">
       <div id="fileInputs">
-          <input type="file" name="file1"class="file:mr-4 file:py-2 file:px-4
+          <input type="file" name="file1"class="file:mr-6 file:py-2 file:px-4
           file:rounded-full file:border-0
           file:text-sm file:font-semibold
-          file:bg-violet-50 file:text-violet-700
-          hover:file:bg-teal-100" />
+          file:bg-teal-100 file:text-teal-700 
+          hover:file:bg-teal-300" />
       </div>
     </form>
     <div id="submit">
-      <button type="button" onclick="submitFile()">Upload</button>
+      <button class="bg-teal-100 w-40 h-14 rounded-full
+      text-sm font-semibold hover:bg-teal-300 text-teal-700"
+       type="button" onclick="submitFile()">Upload</button>
     </div>
-      <div>
-        <h2 id="merge">Merge text</h2>
-        <button type="button" onclick="addFileInput()">addmore</button>
-        <button type="button" onclick="removeFileInput()">remove</button>
+      <div class="flex flex-col items-center bg-teal-100 p-10 m-4 rounded-xl">
+        <h2 class="font-bold " id="merge">Merge text</h2>
+        <button class="bg-teal-100 w-40 h-14 rounded-full
+        text-sm font-semibold hover:bg-teal-300 text-teal-700" type="button" onclick="addFileInput()">
+        <span class="material-symbols-outlined">
+          add_circle
+          </span>
+      </button>
+        <button type="button" onclick="removeFileInput()"><span class="material-symbols-outlined">
+          remove
+          </span></button>
     </div>
     <div>
       <h2 id="split">split</h2>
     
     </div>
 
-    <div>
-      <h2>convert</h2>
-      <form id="convert" method="post" enctype="multipart/form-data">
-        <div id="fileInputs">
-          <input type="file" name="file1" />
-        </div>
-        <button type="button" onclick="setAction('/html')">Convert to HTML</button>
-        <button type="button" onclick="setAction('/docx')">Convert to DOCX</button>
-
     
-      </form>
-    </div>
   </body>
   <script src="../static/index.js"></script>
 </html>
