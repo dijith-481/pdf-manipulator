@@ -4,25 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pdf Manipulator</title>
+    <link rel="stylesheet" href="../static/main.css">
   </head>
 
   <body>
-    <h1>
-      Pdf Manipulator
-    </h1>
-    <div>
-      <h2>Merge text</h2>
-      <form action="/merge" method="post" enctype="multipart/form-data">
-        <div id="fileInputs">
+    <form  id="fileInput"  method="post" enctype="multipart/form-data">
+      <div id="fileInputs">
           <input type="file" name="file1" />
-          <input type="file" name="file2">
-        </div>
+      </div>
+    </form>
+    <div id="submit">
+      <button type="button" onclick="submitFile()">Upload</button>
+    </div>
+      <div>
+        <h2 id="merge">Merge text</h2>
         <button type="button" onclick="addFileInput()">addmore</button>
         <button type="button" onclick="removeFileInput()">remove</button>
-        <button type="submit">upload</button>
-
-    
-      </form>
     </div>
     <div>
       <h2>split</h2>
@@ -50,23 +47,5 @@
       </form>
     </div>
   </body>
-  <script>
-    function addFileInput() {
-      const fileInputs = document.getElementById('fileInputs');
-      const newInput = document.createElement('input');
-      newInput.type = 'file';
-      newInput.name = 'file' + (fileInputs.children.length + 1); 
-      fileInputs.appendChild(newInput);
-    }
-    function removeFileInput() {
-        const fileInputs = document.getElementById('fileInputs');
-        if (fileInputs.children.length > 2) {
-          fileInputs.removeChild(fileInputs.lastChild);
-        }
-      }
-      function setAction(action) {
-      document.getElementById('convert').action = action;
-      document.getElementById('convert').submit();
-    }
-  </script>
+  <script src="../static/index.js"></script>
 </html>
