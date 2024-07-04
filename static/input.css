@@ -11,3 +11,37 @@
   'GRAD' 0,
   'opsz' 24
 }
+@layer components{
+.file-choser{
+  @apply file:mr-6 file:py-2 file:px-4 file:rounded-full
+   file:border-0 file:text-base file:font-semibold
+    file:bg-teal-100 file:text-teal-700
+     hover:file:bg-teal-300 m-3;
+}
+button{
+  @apply bg-teal-100  rounded-full text-sm font-semibold
+   hover:bg-teal-300 hover:rounded-2xl text-teal-700 mx-3 my-2 px-4 py-3 min-w-36
+   transition ease-in-out delay-150  ;
+}
+
+.submit-button{
+  @apply bg-teal-100 w-full h-14 rounded-full text-sm font-semibold
+   hover:bg-teal-300 text-teal-700;
+}
+.main-child{
+  @apply  bg-gray-100 m-3 rounded-2xl  p-3 flex flex-col items-center ;
+}
+.action{
+  @apply hover:bg-teal-100 rounded-full w-full p-3 flex flex-col items-center mt-3;
+}
+.action.pressed{
+  @apply h-2/3 bg-teal-950 text-white rounded-3xl place-items-start hover:bg-teal-950; 
+}
+.action-child{
+  @apply hidden flex-col items-center justify-between  bg-slate-600 w-full h-full 
+}
+.action-child-btns{
+  @apply font-semibold text-lg flex flex-row m-3 w-full justify-between px-4 py-3 items-center;
+}
+
+}

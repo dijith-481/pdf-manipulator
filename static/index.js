@@ -1,57 +1,72 @@
-
 function addFileInput() {
-  const fileInputs = document.getElementById('fileInputs');
-  const fileNumber = fileInputs.children.length + 1;
- 
-  const customHTML = `
-  <input type="file" name="file${fileNumber}" class="file:mr-6 file:py-2 file:px-4
-    file:rounded-full file:border-0
-    file:text-sm file:font-semibold
-    file:bg-teal-100 file:text-teal-700 
-    hover:file:bg-teal-300" />
-    `;
-    fileInputs.insertAdjacentHTML('beforeend', customHTML); 
-    }
+  const newInput = document.createElement("input");
+  const fileNumber = document.getElementById("fileInputs").children.length + 1;
 
+  newInput.type = "file";
+  newInput.name = `file${fileNumber}`;
+  newInput.classList.add("file-choser");
+  fileInputs.appendChild(newInput);
+}
 
-    function removeFileInput() {
-        const fileInputs = document.getElementById('fileInputs');
-        if (fileInputs.children.length > 2) {
-          fileInputs.removeChild(fileInputs.lastChild);
+function removeFileInput() {
+  const fileInputs = document.getElementById("fileInputs");
+  if (fileInputs.children.length > 2) {
+    fileInputs.removeChild(fileInputs.lastChild);
+  }
+}
+function setSingleFileInput() {
+  const fileInputs = document.getElementById("fileInputs");
+  while (fileInputs.children.length > 1) {
+    fileInputs.removeChild(fileInputs.lastChild);
+  }
+}
+
+function setAction(action) {
+  document.getElementById("fileInput").action = action;
+}
+
+function submitFile() {
+  const form = document.getElementById("fileInput");
+  console.log(form.hasAttribute("action"));
+  if (form.hasAttribute("action")) {
+    form.submit();
+  } else {
+    const textNode = document.createTextNode("No action attribue");
+    form.appendChild(textNode);
+
+    alert("No action attribute found");
+  }
+}
+const actions = document.querySelectorAll(".action");
+var currentAction = ' ';
+actions.forEach((action) => {
+  action.addEventListener("click", () => {
+    if (currentAction !== action) {
+      currentAction = action;
+      actions.forEach((otherAction) => {
+        otherAction.querySelector(".action-child").classList.add("hidden")
+        otherAction.querySelector(".action-child").classList.remove("flex")
+        otherAction.classList.remove("pressed");
+      });
+      action.querySelector(".action-child").classList.add("flex")
+        action.querySelector(".action-child").classList.remove("hidden")
+      action.classList.add("pressed");
+      const actionPath = action.dataset.action;
+      setAction(actionPath);
+      const fileInputs = document.getElementById("fileInputs");
+      if (actionPath == "/merge") {
+        merge();
+        if (fileInputs.children.length < 2) {
+          addFileInput();
         }
-    }
-    function setSingleFileInput() {
-            const fileInputs = document.getElementById('fileInputs');
-            while (fileInputs.children.length > 1) {
-              fileInputs.removeChild(fileInputs.lastChild);
-            }}
-          
-      function setAction(action) {
-      document.getElementById('fileInput').action = action;
-      
-    }
-    
-
-function submitFile(){
-      const form=document.getElementById('fileInput')
-      console.log(form.hasAttribute('action'))
-      if(form.hasAttribute('action')){
-        form.submit()
-      }
-      else{
-        const textNode=document.createTextNode('No action attribue')
-        form.appendChild(textNode)
-
-        alert('No action attribute found');
+      } else {
+        setSingleFileInput();
       }
     }
-    const merge = document.getElementById('merge');
-    const split = document.getElementById('split');
-    const convert = document.getElementById('split');
-    const extract = document.getElementById('split');
-merge.addEventListener('click',addFileInput, setAction('/merge'));
-split.addEventListener('click',setSingleFileInput, setAction('/split'),setSingleFileInput());
-merge.addEventListener('click', setAction('/merge'));
-merge.addEventListener('click', setAction('/merge'));
+  });
+});
 
-
+function merge() {
+}
+function split() {
+}
