@@ -13,49 +13,60 @@
 
   <body class="h-screen flex flex-col">
     <header
-      class="h-16 flex items-center justify-center bg-teal-950 w-auto p-4"
+      class=" h-24 bg-slate-200 flex flex-row p-6 justify-between items-center backdrop-blur-lg"
     >
+     <h1 class=" text-5xl font-bold flex-1">PDF Manipulator</h1>
+     <div class="flex flex-row"><p>github</p></div>
+
     </header>
-    <main class="bg-green-100 rounded-3xl m-3 w-auto h-full flex flex-row p-5 ">
-      <div class="main-child w-1/3">
-        <form id="fileInput" method="post" enctype="multipart/form-data"
-        class=" w-full  h-5/6 p-4  flex  "
-        >
-          <div id="fileInputs" class="flex flex-col">
-            <input
-              type="file"
-              name="file1"
-              class="file-choser" />
-          </div>
-        </form>
-        <div id="submit" class="w-full">
-          <button
-            class="submit-button"
-            type="button"
-            onclick="submitFile()">
-            Upload
-          </button>
+    <main class="h-full">
+      <div class="container">
+        <div class="main-content">
+            <div class="panel">
+                <h2>Upload Files</h2>
+                <div id="dropZone">
+                    <p>Drag & drop PDF files here</p>
+                    <p>or</p>
+                    <button onclick="document.getElementById('fileInput').click()">Select Files</button>
+                    <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+                </div>
+                <div id="fileSelected">
+                  <p>Selected</p>
+                  
+                  
+                  
+              </div>
+                <div id="fileList"></div>
+            </div>
+            
+            <div class="panel">
+                <h2>PDF Tools</h2>
+                <ul class="feature-list" id="featureList">
+                    <li class="feature-item" onclick="selectFeature('merge')">Merge PDFs</li>
+                    <li class="feature-item" onclick="selectFeature('split')">Split PDF</li>
+                    <li class="feature-item" onclick="selectFeature('extract')">Extract Text</li>
+                    <li class="feature-item" onclick="selectFeature('watermark')">Add Watermark</li>
+                    <li class="feature-item" onclick="selectFeature('encrypt')">Encrypt PDF</li>
+                    <li class="feature-item" onclick="selectFeature('convert')">Convert to DOCX</li>
+                    <li class="feature-item" onclick="selectFeature('compress')">Compress PDF</li>
+                    <li class="feature-item" onclick="selectFeature('rotate')">Rotate Pages</li>
+                    <li class="feature-item" onclick="selectFeature('reorder')">Reorder Pages</li>
+                </ul>
+            </div>
         </div>
-      </div>
-      <div class=" main-child w-2/3">
-      <div class="action" data-action="/merge">
-        <h2 class="font-bold flex   text-2xl" id="merge">Merge text</h2>
-        <div class="action-child">
-          <div class="action-child-btns">
-            <p>Add more files</p>
-            <div class="">
-          <button class="merge-btn" type="button" onclick="addFileInput()">
-            <span class="material-symbols-outlined"> add_circle </span>
-          </button>
-          <button type="button" class="merge-btn" onclick="removeFileInput()">
-            <span class="material-symbols-outlined"> remove </span> 
-          </button></div></div>
-          <p class="pb-7">Merge multiple pdf's to single file 
-            add more files and press upload
-          </p>
-        </div>  
-      </div>
+        <button onclick="processFiles()">Process Files</button>
+    </div>
     </main>
+
+
+
+
+
+
+
+
+
+    
   </body>
   <script src="../static/index.js"></script>
 </html>

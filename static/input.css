@@ -12,36 +12,148 @@
   'opsz' 24
 }
 @layer components{
-.file-choser{
-  @apply file:mr-6 file:py-2 file:px-4 file:rounded-full
-   file:border-0 file:text-base file:font-semibold
-    file:bg-teal-100 file:text-teal-700
-     hover:file:bg-teal-300 m-3;
+  
 }
-button{
-  @apply bg-teal-100  rounded-full text-sm font-semibold
-   hover:bg-teal-300 hover:rounded-2xl text-teal-700 mx-3 my-2 px-4 py-3 min-w-36
-   transition ease-in-out delay-150  ;
+:root {
+  --primary-color: #4a90e2;
+  --secondary-color: #f5a623;
+  --background-color: #f8f9fa;
+  --text-color: #333;
+  --border-color: #e0e0e0;
 }
-
-.submit-button{
-  @apply bg-teal-100 w-full h-14 rounded-full text-sm font-semibold
-   hover:bg-teal-300 text-teal-700;
+body {
+  font-family: 'Poppins', sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
-.main-child{
-  @apply  bg-gray-100 m-3 rounded-2xl  p-3 flex flex-col items-center ;
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
 }
-.action{
-  @apply hover:bg-teal-100 rounded-full w-full p-3 flex flex-col items-center mt-3;
+header {
+  background-color: var(--primary-color);
+  color: white;
+  text-align: center;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
 }
-.action.pressed{
-  @apply h-2/3 bg-teal-950 text-white rounded-3xl place-items-start hover:bg-teal-950; 
+h1 {
+  margin: 0;
+  font-size: 2.5rem;
 }
-.action-child{
-  @apply hidden flex-col items-center justify-between  bg-slate-600 w-full h-full 
+.tagline {
+  font-weight: 300;
+  margin-top: 0.5rem;
 }
-.action-child-btns{
-  @apply font-semibold text-lg flex flex-row m-3 w-full justify-between px-4 py-3 items-center;
+.main-content {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
-
+.panel {
+  background-color: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  flex: 1;
+}
+h2 {
+  color: var(--primary-color);
+  margin-top: 0;
+}
+#dropZone {
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+#fileSelected{
+  display: none;
+  border: 2px  var(--border-color);
+  border-radius: 8px;
+  padding: 2rem;
+  background-color: #008080;
+  text-align: center;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  
+}
+#dropZone:hover, #dropZone.dragover {
+  background-color: #f0f8ff;
+  border-color: var(--primary-color);
+}
+#dropZone p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+#fileList {
+  margin-top: 1rem;
+}
+.file-item {
+  background-color: #f1f3f5;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+.file-item:hover {
+  background-color: #e9ecef;
+}
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+button:hover {
+  background-color: #3a7bd5;
+}
+.remove-btn {
+  background-color: #e74c3c;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+}
+.remove-btn:hover {
+  background-color: #c0392b;
+}
+.feature-list {
+  list-style-type: none;
+  padding: 0;
+}
+.feature-item {
+  background-color: #f1f3f5;
+  margin-bottom: 0.5rem;
+  padding: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.feature-item:hover {
+  background-color: #e9ecef;
+  transform: translateY(-2px);
+}
+.feature-item.active {
+  background-color: var(--secondary-color);
+  color: white;
+}
+footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: var(--primary-color);
+  color: white;
 }
