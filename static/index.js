@@ -100,6 +100,9 @@ function handleFiles(newFiles) {
     }
     if (selectedFeature!="merge"){
       showSelected();
+      showSelect();
+
+
     }
     else{
       
@@ -122,7 +125,7 @@ function removeFile(index) {
 }
 function showSelect(){
   document.getElementById("dropZone").style.display="block";
-  document.getElementById("fileSelected").style.display="none";
+  document.getElementById("fileSelected").style.display="block";
 }
 function showSelected(){
   if (fileList.children.length!==0){
@@ -237,18 +240,20 @@ uploadForm.addEventListener('submit',async(e)=>{
   e.preventDefault();
   if (files.length>0){
 const formData = new FormData();
-files.forEach((file) => {
-  formData.append('file', file);
+files.forEach((file, index) => {
+  formData.append(`file${index + 1}`, file);
 });
-  console.log(files)
-  console.log('sent')
+
+  //console.log(files)
+ 
   console.log(formData)
   const response = await fetch('/upload', {
     method: 'POST',
     body: formData
 });
-const jsondata = await response.json();
+const jsondata = await response.text();
 sessionId= jsondata['session_id']
+console.log(jsondata)
   }
 });
 console.log(sessionId)

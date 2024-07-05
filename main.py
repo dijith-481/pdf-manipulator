@@ -25,25 +25,30 @@ def index():
 
 @app.route("/upload",methods=['post'])
 def upload():
-    if 'file' not in request.files:
-            return 'nofile'
-
-    file = request.files['file']
-    if file.filename == '':
-        return 'noselected file'
-    if not file.filename.endswith('.pdf'):
-        return 'not a pdf file'
-
-    temp_filename = generate_temp_filename(file.filename)
-    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
     try:
-        file.save(temp_filepath)
+        uploaded_files = []    
+        for file_key in request.files:
+            if file_key not in request.files:
+                return f'No {file_key} part'
+            file = request.files[file_key]
+            if file.filename == '':
+                return f'No selected file for {file_key}'
+            if not file.filename.endswith('.pdf'):
+                return f'Not a PDF file for {file_key}'
+            temp_filename = generate_temp_filename(file.filename)
+            temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
+            try:
+                file.save(temp_filepath)
+                uploaded_files.append(file.filename)
+            except:
+                return 'Error saving file'
+        session_id = str(uuid.uuid4())
+        store_session_data(session_id,uploaded_files)
+        
+        return jsonify({'success': True, 'session_id': session_id, 'files':uploaded_files})
     except:
-        return 'error saving file'
-    session_id = str(uuid.uuid4())
-    store_session_data(session_id, temp_filename)
-    return jsonify({'success': True, 'session_id': session_id})
-    
+        pt=str(request.files)
+        return jsonify({'success': False, 'error':pt})
 
 @app.route('/download',methods=['post'])
 def download():
@@ -138,9 +143,10 @@ def cleanup_temp_files():
             os.remove(file_path)
 
 
-def store_session_data(uuid, filename):
+def store_session_data(uuid, filenames):
     session['uuid']= uuid
-    session['filename']= filename
+    for i, filename in enumerate(filenames):
+        session[f'file{i+1}']= filename
 
 
 
