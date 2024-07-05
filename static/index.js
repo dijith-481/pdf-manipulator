@@ -1,5 +1,7 @@
 
 
+
+
 /*
 function setAction(action) {
   document.getElementById("1fileInput").action = action;
@@ -64,6 +66,7 @@ let files = [];
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const featureList = document.getElementById('featureList');
+let sessionId='';
 let selectedFeature = null;
 
 dropZone.addEventListener('dragover', (e) => {
@@ -92,6 +95,9 @@ function handleFiles(newFiles) {
         }
     }
     updateFileList();
+    if (!selectedFeature){
+      showChooseAction();//yet to implement
+    }
     if (selectedFeature!="merge"){
       showSelected();
     }
@@ -104,7 +110,7 @@ function handleFiles(newFiles) {
 function removeFile(index) {
     files.splice(index, 1);
     updateFileList();
-    if (selectedFeature=="merge"){
+    if (files.length==0){
       showSelect();
     }
     else{
@@ -124,7 +130,7 @@ function showSelected(){
   
   const fileSelected= document.getElementById("fileSelected");
   fileSelected.style.display="block"
-  fileSelected.innerHTML=`<p>Selected</p>`;
+  
   document.getElementById("dropZone").style.display="none";
   if (selectedFeature!='merge'){
     console.log('hd')
@@ -225,3 +231,27 @@ splitOptionSelect.addEventListener('change', function() {
     splitPagesInput.style.display = 'none';
   }
 });
+
+const uploadForm = document.getElementById('UploadFile')
+uploadForm.addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  if (files.length>0){
+const formData = new FormData();
+files.forEach((file) => {
+  formData.append('file', file);
+});
+  console.log(files)
+  console.log('sent')
+  console.log(formData)
+  const response = await fetch('/upload', {
+    method: 'POST',
+    body: formData
+});
+const jsondata = await response.json();
+sessionId= jsondata['session_id']
+  }
+});
+console.log(sessionId)
+
+
+
