@@ -30,27 +30,34 @@
                     <button onclick="document.getElementById('fileInput').click()">Select Files</button>
                     <input type="file" id="fileInput" accept=".pdf" style="display: none;">
                 </div>
-                <div id="fileSelected">
-                  <p>Selected</p>
-                  
-                  
-                  
+                <div id="fileSelected">  
               </div>
                 <div id="fileList"></div>
+                <div>
+                  <span>Splitting Options:
+                  </span>
+               <select id="splitOption">
+                    <option value="middle">Middle</option>
+                    <option value="odd">Odd Pages</option>
+                    <option value="even">Even Pages</option>
+                    <option value="custom">Custom</option>
+                </select>
+                <input type="text" id="splitPages" placeholder="1,2,3" style="display: none;"> 
+</div>
             </div>
             
             <div class="panel">
                 <h2>PDF Tools</h2>
                 <ul class="feature-list" id="featureList">
-                    <li class="feature-item" onclick="selectFeature('merge')">Merge PDFs</li>
-                    <li class="feature-item" onclick="selectFeature('split')">Split PDF</li>
-                    <li class="feature-item" onclick="selectFeature('extract')">Extract Text</li>
-                    <li class="feature-item" onclick="selectFeature('watermark')">Add Watermark</li>
-                    <li class="feature-item" onclick="selectFeature('encrypt')">Encrypt PDF</li>
-                    <li class="feature-item" onclick="selectFeature('convert')">Convert to DOCX</li>
-                    <li class="feature-item" onclick="selectFeature('compress')">Compress PDF</li>
-                    <li class="feature-item" onclick="selectFeature('rotate')">Rotate Pages</li>
-                    <li class="feature-item" onclick="selectFeature('reorder')">Reorder Pages</li>
+                    <li class="feature-item merge" onclick="selectFeature('merge')">Merge PDFs</li>
+                    <li class="feature-item split" onclick="selectFeature('split')">Split PDF</li>
+                    <li class="feature-item extract" onclick="selectFeature('extract')">Extract Text</li>
+                    <li class="feature-item watermark" onclick="selectFeature('watermark')">Add Watermark</li>
+                    <li class="feature-item encrypt" onclick="selectFeature('encrypt')">Encrypt PDF</li>
+                    <li class="feature-item convert" onclick="selectFeature('convert')">Convert to DOCX</li>
+                    <li class="feature-item compress" onclick="selectFeature('compress')">Compress PDF</li>
+                    <li class="feature-item rotate" onclick="selectFeature('rotate')">Rotate Pages</li>
+                    <li class="feature-item reorder" onclick="selectFeature('reorder')">Reorder Pages</li>
                 </ul>
             </div>
         </div>

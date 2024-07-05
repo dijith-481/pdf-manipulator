@@ -1,4 +1,5 @@
 
+
 /*
 function setAction(action) {
   document.getElementById("1fileInput").action = action;
@@ -91,11 +92,11 @@ function handleFiles(newFiles) {
         }
     }
     updateFileList();
-    if (selectedFeature=="merge"){
-      console.log('hi')
+    if (selectedFeature!="merge"){
+      showSelected();
     }
     else{
-      showSelected();
+      
     }
    
 }
@@ -103,7 +104,14 @@ function handleFiles(newFiles) {
 function removeFile(index) {
     files.splice(index, 1);
     updateFileList();
-    showSelect();
+    if (selectedFeature=="merge"){
+      showSelect();
+    }
+    else{
+      showSelected();
+    }
+    
+    
     
 }
 function showSelect(){
@@ -111,8 +119,21 @@ function showSelect(){
   document.getElementById("fileSelected").style.display="none";
 }
 function showSelected(){
-  document.getElementById("fileSelected").style.display="block";
+  if (fileList.children.length!==0){
+    
+  
+  const fileSelected= document.getElementById("fileSelected");
+  fileSelected.style.display="block"
+  fileSelected.innerHTML=`<p>Selected</p>`;
   document.getElementById("dropZone").style.display="none";
+  if (selectedFeature!='merge'){
+    console.log('hd')
+    const fileList = document.getElementById('fileList');
+    if (fileList.children.length>1){
+      fileSelected.innerHTML=`<p>You can't take multiple files</p>`;
+    }
+  }
+}
 }
 function updateFileList() {
     const fileList = document.getElementById('fileList');
@@ -134,14 +155,32 @@ function selectFeature(feature) {
     for (let item of items) {
         item.classList.remove('active');
     }
-    event.target.classList.add('active');
-    if (selectedFeature == 'merge'){
+    const clickedButton = document.querySelector(`.${feature}`); 
+    if (clickedButton) {
+        clickedButton.classList.add('active');
+    }
+     if (selectedFeature == 'merge'){
       showSelect();
 
     }
     else{
-      if (fileList.)
+      showSelected();
     }
+    switch (feature) {
+        case 'merge':
+            merge()
+            break; 
+        case 'split':
+            split()
+            break;
+   
+}
+}
+function merge(){
+
+}
+function split(){
+
 }
 
 function processFiles() {
@@ -158,3 +197,31 @@ function processFiles() {
     console.log('Selected feature:', selectedFeature);
     alert(`Processing ${files.length} file(s) with the ${selectedFeature} feature. This feature is not yet implemented.`);
 }
+// Get references to the select element and the input field
+const splitOptionSelect = document.getElementById('splitOption');
+const splitPagesInput = document.getElementById('splitPages');
+let splitPages = [];
+
+// Add an event listener to the select element
+splitOptionSelect.addEventListener('change', function() {
+  // Check if the selected option is "custom"
+  if(this.value === 'middle') {
+    splitPages=['m'];
+  
+  }
+   else if (this.value === 'odd') {
+    splitPages=['o'];
+  
+  }
+   else if (this.value === 'even') {
+    splitPages=['e'];
+  
+  } 
+  if (this.value === 'custom') {
+    // Show the input field
+    splitPagesInput.style.display = 'block';
+  } else {
+    // Hide the input field
+    splitPagesInput.style.display = 'none';
+  }
+});
