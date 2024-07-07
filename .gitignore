@@ -1,4 +1,7 @@
 .venv
 .idx
-src/devserver.sh
+devserver.sh
 __pycache__
+node_modules
+temp
+flask_session
