@@ -1,67 +1,4 @@
 
-
-
-
-/*
-function setAction(action) {
-  document.getElementById("1fileInput").action = action;
-}
-
-function submitFile() {
-  const form = document.getElementById("1fileInput");
-  console.log(form.hasAttribute("action"));
-  if (form.hasAttribute("action")) {
-    form.submit();
-  } else {
-    const textNode = document.createTextNode("No action attribue");
-    form.appendChild(textNode);
-
-    alert("No action attribute found");
-  }
-}
-const actions = document.querySelectorAll(".action");
-var currentAction = ' ';
-actions.forEach((action) => {
-  action.addEventListener("click", () => {
-    if (currentAction !== action) {
-      currentAction = action;
-      actions.forEach((otherAction) => {
-        otherAction.querySelector(".action-child").classList.remove("expanded")
-        otherAction.classList.remove("pressed");
-      });
-      action.querySelector(".action-child").classList.add("expanded")
-      action.classList.add("pressed");
-      const actionPath = action.dataset.action;
-      setAction(actionPath);
-      const fileInputs = document.getElementById("fileInputs");
-      if (actionPath == "/merge") {
-        if (fileInputs.children.length < 2) {
-          addFileInput();
-        }
-      } else {
-        setSingleFileInput();
-      }
-    }
-  });
-});
-function  checkFileInput(){
-  const fileInputs = document.getElementById("1fileInputs");
-  for (const fileInput of fileInputs.children) {
-    if  (fileInput.files.length == 0) {
-      console.log('hi')
-      const uploadError=document.getElementById("upload-error");
-      uploadError.textContent="you haven't chosen enough files";
-    }
-    else if (!fileInput.files[0].name.endsWith('.pdf')) {
-      console.log('di')
-      const uploadError=document.getElementById("upload-error");
-      uploadError.textContent="choose a pdf file";
-    }
-    else{
-      submitFile();
-} 
-  }}
-*/
 let files = [];
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
@@ -90,31 +27,40 @@ function handleFiles(newFiles) {
     for (let file of newFiles) {
         if (file.type === 'application/pdf') {
             files.push(file);
+            console.log(file)
         } else {
             alert(`${file.name} is not a PDF file and was not added.`);
+            //implement printing file not of type pdf
         }
     }
     updateFileList();
     if (!selectedFeature){
       showChooseAction();//yet to implement
     }
-    if (selectedFeature!="merge"){
-      showSelected();
-      showSelect();
-
-
-    }
-    else{
-      
-    }
    
 }
-
+function showChooseAction(){
+  const specifyAction=document.getElementById('selectAction');
+  specifyAction.style.display='block';
+  specifyAction.innerHTML=`<p>Select an action<p>`;
+  hideDropZone();
+}
+function hidechooseAction(){
+  document.getElementById("selectAction").style.display="none";
+}
+function showDropZone(){
+  document.getElementById("dropZone").style.display="block";
+}
+function hideDropZone(){
+  document.getElementById("dropZone").style.display="none";
+}
+///checked until here
 function removeFile(index) {
     files.splice(index, 1);
     updateFileList();
     if (files.length==0){
-      showSelect();
+      showDropZone();
+      hidechooseAction();
     }
     else{
       showSelected();
@@ -132,9 +78,7 @@ function showSelected(){
     
   
   const fileSelected= document.getElementById("fileSelected");
-  fileSelected.style.display="block"
-  
-  document.getElementById("dropZone").style.display="none";
+  fileSelected.style.display="block";
   if (selectedFeature!='merge'){
     console.log('hd')
     const fileList = document.getElementById('fileList');
@@ -168,6 +112,7 @@ function selectFeature(feature) {
     if (clickedButton) {
         clickedButton.classList.add('active');
     }
+    hidechooseAction();
      if (selectedFeature == 'merge'){
       showSelect();
 
@@ -323,12 +268,21 @@ renderDownload(fileUrl);
 function renderDownload(link){
   const pdfPanel = document.getElementById('pdfDetailPanel');
   console.log('done')
-  pdfPanel.innerHTML = `<form action="${link}">
-  <button type="submit">Download</button>
+  pdfPanel.innerHTML = `<form action="${link}" id="downloadForm">
+  <button onClick=fileDownloadStarted()>Download</button>
 </form>`
 
 }
-
+function fileDownloadStarted(){
+  const pdfPanel = document.getElementById('main');
+  const form = document.getElementById('downloadForm');
+  form.submit();
+  setTimeout(function() {
+     console.log('done')
+  pdfPanel.innerHTML = `Thanks for using Pdf Manipulator`
+  }, 100);
+ 
+}
 
 
 

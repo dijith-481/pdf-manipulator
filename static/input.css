@@ -12,7 +12,9 @@
   'opsz' 24
 }
 @layer components{
-  
+  #selectAction{
+    @apply h-32 bg-teal-200 hidden;
+  }
 }
 :root {
   --primary-color: #4a90e2;
