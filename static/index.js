@@ -192,20 +192,9 @@ function split(){
 
 }
 
-function processFiles() {
-    if (files.length === 0) {
-        alert('Please add at least one PDF file.');
-        return;
-    }
-    if (!selectedFeature) {
-        alert('Please select a PDF tool.');
-        return;
-    }
-    // Here you would implement the actual file processing logic
-    console.log('Processing files:', files);
-    console.log('Selected feature:', selectedFeature);
-    alert(`Processing ${files.length} file(s) with the ${selectedFeature} feature. This feature is not yet implemented.`);
-}
+
+
+
 // Get references to the select element and the input field
 const splitOptionSelect = document.getElementById('splitOption');
 const splitPagesInput = document.getElementById('splitPages');
@@ -251,12 +240,95 @@ files.forEach((file, index) => {
     method: 'POST',
     body: formData
 });
-const jsondata = await response.text();
-sessionId= jsondata['session_id']
+const jsondata = await response.json();
 console.log(jsondata)
+console.log(jsondata["session_id"]);
+console.log(jsondata["details"])
+if (jsondata["success"]){
+  sessionId=jsondata["session_id"];
+  console.log(sessionId)
+renderPdf(files[0]);
+renderPdfDetails(files[0].name,jsondata['details'][0]);
+renderProcessBtn();
+ } 
+ else{
+  alert(jsondata["error"])
+ }
+}
+});
+
+
+function renderPdf(pdfFile){
+const pdfPanel = document.getElementById('pdfPanel');
+
+pdfPanel.innerHTML =`<iframe src=${URL.createObjectURL(pdfFile)} width='600' height='500'></iframe>`;
+
+}
+
+
+
+function renderPdfDetails(name,details){
+    const pdfDetailPanel =document.getElementById('pdfDetailPanel');
+    const pdfDetailkeys = ['Page Count','Author','Subject'];
+    let pdfDetailHtml =`<h2>${name}</h2>`
+    console.log(details);
+details.forEach((detail,index) => {
+      if (detail){
+        pdfDetailHtml+=`<p>${pdfDetailkeys[index]}: ${detail}</p>`
+      }
+
+      console.log(detail);
+
+    });
+    pdfDetailPanel.innerHTML=pdfDetailHtml;
+}
+
+function renderProcessBtn(){
+  const pdfDetailPanel = document.getElementById('pdfDetailPanel'); 
+  const form = document.createElement('form');
+  form.id = 'processBtn';
+  form.enctype = 'multipart/form-data';
+  const button = document.createElement('button');
+  button.className = 'process-btn';
+  button.textContent = selectedFeature; 
+  form.appendChild(button);
+  pdfDetailPanel.appendChild(form); 
+
+const processFile = document.getElementById('processBtn');
+console.log(processFile)
+processFile.addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  if (selectedFeature=='convert to docs'){
+    const formData = new FormData();
+formData.append('sessionId', sessionId);
+const response = await fetch('/docx', {
+  method: 'POST',
+  body: formData
+});
+const jsondata = await response.json();
+console.log(jsondata)
+console.log(jsondata['file'])
+const fileUrl = jsondata['file'];
+const link = document.createElement('a');
+link.href = fileUrl;
+console.log(link);
+renderDownload(fileUrl);
+
+
   }
 });
-console.log(sessionId)
+
+}
+
+function renderDownload(link){
+  const pdfPanel = document.getElementById('pdfDetailPanel');
+  console.log('done')
+  pdfPanel.innerHTML = `<form action="${link}">
+  <button type="submit">Download</button>
+</form>`
+
+}
+
 
 
 

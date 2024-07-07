@@ -1,20 +1,28 @@
 import os
 import uuid
-from flask import Flask, send_file,request,send_from_directory,render_template,make_response,jsonify,session
+from io import BytesIO
+from flask import Flask, send_file,request,send_from_directory,render_template,make_response,jsonify,session,url_for
+from flask_session import Session
 from werkzeug.utils import secure_filename
 from pdf2docx import Converter
 from PyPDF2 import PdfReader,PdfWriter
 import pdfminer
 from flask_apscheduler import APScheduler
 import time
+import base64
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secure_secret_key'
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
+
+scheduler = APScheduler()
+scheduler.init_app(app)
+scheduler.start()
 app.config['TEMP_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'temp')
 if not os.path.exists(app.config['TEMP_FOLDER']):
     os.makedirs(app.config['TEMP_FOLDER'])
-TEMP_FILE_TIMEOUT = 1800
-
+TEMP_FILE_TIMEOUT =3600
 
 
 
@@ -26,26 +34,28 @@ def index():
 @app.route("/upload",methods=['post'])
 def upload():
     try:
-        uploaded_files = []    
+        uploaded_files = []   
+        fileDetails = [] 
         for file_key in request.files:
             if file_key not in request.files:
-                return f'No {file_key} part'
+                return jsonify({'success': False, 'error':f'no {file_key}part'})
             file = request.files[file_key]
             if file.filename == '':
-                return f'No selected file for {file_key}'
+                return jsonify({'success': False, 'error':f'No selected file for {file_key}'})
             if not file.filename.endswith('.pdf'):
-                return f'Not a PDF file for {file_key}'
+                return jsonify({'success': False, 'error':f'Not a PDF file for {file_key}'})
             temp_filename = generate_temp_filename(file.filename)
             temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
             try:
                 file.save(temp_filepath)
-                uploaded_files.append(file.filename)
+                uploaded_files.append(temp_filename)
+                fileDetails.append(pdfDetails(file))
             except:
-                return 'Error saving file'
+                return jsonify({'success': False, 'error':'Error saving file'})
         session_id = str(uuid.uuid4())
         store_session_data(session_id,uploaded_files)
         
-        return jsonify({'success': True, 'session_id': session_id, 'files':uploaded_files})
+        return jsonify({'success': True, 'session_id': session_id, 'details':fileDetails})
     except:
         pt=str(request.files)
         return jsonify({'success': False, 'error':pt})
@@ -71,14 +81,34 @@ def merge():
     merge_pdf(file)
     return send_file('merge/merge.html')
 
+@app.route('/download/<filename>', methods=['get'])
+def download_file(filename):
+    file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
+    if os.path.exists(file_path):
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name='sample.docx',
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    else:
+        return jsonify({'error': file_path}), 404
+
 @app.route("/docx", methods=['post'])
 def docx():
-    merger=PdfWriter()
-    filename=request.files['file1']
-    merger.append(PdfReader(filename))
-    merger.write('test.pdf')
-    todocx('test.pdf')
-    return send_file('merge/merge.html')
+    sessionId=request.form['sessionId']
+    filename=session['files'][0]
+    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], filename)
+    docxFileName=todocx(temp_filepath)
+    docxUrl= f'/download/{docxFileName}'
+
+
+    try:
+        return jsonify({'success': True, 'file': docxUrl})
+
+    except:
+        return jsonify({'success': False, 'error':'session id'})
+
 @app.route('/split',methods=['post'])
 def split():
     filename=request.files['file1']
@@ -97,14 +127,15 @@ def splitCheck():
 
 
 def todocx(filename):
-
     pdf_file = filename
-    docx_file = 'sample.docx'
-
-    # convert pdf to docx
+    temp_filename = generate_temp_filename('document.docx')
+    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
+    docx_file = temp_filepath
     cv = Converter(pdf_file)
-    cv.convert(docx_file)      # all pages by default
+    cv.convert(docx_file)    
     cv.close()
+    return temp_filename
+
 
 def  merge_pdf(pdfs):
     merger=PdfWriter()
@@ -144,19 +175,33 @@ def cleanup_temp_files():
 
 
 def store_session_data(uuid, filenames):
-    session['uuid']= uuid
-    for i, filename in enumerate(filenames):
-        session[f'file{i+1}']= filename
+    session['id']= uuid
+    session['files']=[]
+    for filename in (filenames):
+        session['files'].append(filename)
+
+def pdfDetails(pdf):
+    pdf_reader=PdfReader(pdf)
+    meta=pdf_reader.metadata
+    No_of_pages=len(pdf_reader.pages)
+    author=meta.author
+    subject=meta.subject
+    try:
+        return (No_of_pages,author,subject)
+        
+        
+    except:
+        return 'error in acessing pdf details'
 
 
 
 
-scheduler = APScheduler()
-scheduler.init_app(app)
-scheduler.start()
-@scheduler.task('interval', id='do_job_1', seconds=360, misfire_grace_time=900)
+
+
+@scheduler.task('interval', id='do_job_1', seconds=3600, misfire_grace_time=900)
 def job1():
-    app.cleanup_temp_files()  # Call the cleanup function
+    cleanup_temp_files()  # Call the cleanup function
+
 
 
 
