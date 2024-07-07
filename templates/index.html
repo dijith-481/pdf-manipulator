@@ -25,33 +25,22 @@
         <div class="main-content">
             <div class="panel" id="pdfDetailPanel">
                 <h2>Upload Files</h2>
-                <div id="selectAction">
-
-                </div>
-                <div id="dropZone">
-                    <p>Drag & drop PDF files here</p>
-                    <p>or</p>
-                    <button onclick="document.getElementById('fileInput').click()">Select Files</button>
-                    <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;">
-                </div>
-                <div id="fileSelected"> 
+                <div id="selectAction"></div>
+                <div id="uploadForm"> 
                   <form action="/upload" method="post" enctype="multipart/form-data" id="UploadFile">
                   <button class="upload-btn"> Upload</button> 
                   </form>
                 </div>
+                <div id="dropZone">
+                    <p>Drag & drop PDF files here</p>
+                    <p>or</p>
+                    <button id="inputFileBtn" onclick="document.getElementById('fileInput').click()">Select Files</button>
+                    <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;">
+                </div>
+                
                 <div id="fileList"></div>
-              
-                <div>
-                  <span>Splitting Options:
-                  </span>
-               <select id="splitOption">
-                    <option value="middle">Middle</option>
-                    <option value="odd">Odd Pages</option>
-                    <option value="even">Even Pages</option>
-                    <option value="custom">Custom</option>
-                </select>
-                <input type="text" id="splitPages" placeholder="1,2,3" style="display: none;"> 
-</div>
+                
+                
             </div>
             
             <div class="panel" id="pdfPanel">
@@ -62,7 +51,7 @@
                     <li class="feature-item extract" onclick="selectFeature('extract')">Extract Text</li>
                     <li class="feature-item watermark" onclick="selectFeature('watermark')">Add Watermark</li>
                     <li class="feature-item encrypt" onclick="selectFeature('encrypt')">Encrypt PDF</li>
-                    <li class="feature-item convert" onclick="selectFeature('convert to docs')">Convert to DOCX</li>
+                    <li class="feature-item convertToDocx" onclick="selectFeature('convertToDocx')">Convert to DOCX</li>
                     <li class="feature-item compress" onclick="selectFeature('compress')">Compress PDF</li>
                     <li class="feature-item rotate" onclick="selectFeature('rotate')">Rotate Pages</li>
                     <li class="feature-item reorder" onclick="selectFeature('reorder')">Reorder Pages</li>

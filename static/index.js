@@ -2,7 +2,10 @@
 let files = [];
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
+const fileInputBtn = document.getElementById('inputFileBtn');
 const featureList = document.getElementById('featureList');
+let noOfPages = null;
+let splitValue = null;
 let sessionId='';
 let selectedFeature = null;
 
@@ -20,7 +23,9 @@ dropZone.addEventListener('drop', (e) => {
     dropZone.classList.remove('dragover');
     handleFiles(e.dataTransfer.files);
 });
-
+fileInputBtn.addEventListener('click', () => {
+  fileInput.value = null;
+});
 fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
 function handleFiles(newFiles) {
@@ -35,7 +40,11 @@ function handleFiles(newFiles) {
     }
     updateFileList();
     if (!selectedFeature){
-      showChooseAction();//yet to implement
+      showChooseAction();
+    }
+    else{
+      showUpload();
+      hideDropZone();
     }
    
 }
@@ -54,40 +63,27 @@ function showDropZone(){
 function hideDropZone(){
   document.getElementById("dropZone").style.display="none";
 }
-///checked until here
+function showUpload(){
+  document.getElementById("uploadForm").style.display="block";
+}
+function hideUpload(){
+  document.getElementById("uploadForm").style.display="none";
+}
+
+
 function removeFile(index) {
     files.splice(index, 1);
     updateFileList();
     if (files.length==0){
       showDropZone();
       hidechooseAction();
-    }
-    else{
-      showSelected();
+      hideUpload();
     }
     
+   
     
-    
 }
-function showSelect(){
-  document.getElementById("dropZone").style.display="block";
-  document.getElementById("fileSelected").style.display="block";
-}
-function showSelected(){
-  if (fileList.children.length!==0){
-    
-  
-  const fileSelected= document.getElementById("fileSelected");
-  fileSelected.style.display="block";
-  if (selectedFeature!='merge'){
-    console.log('hd')
-    const fileList = document.getElementById('fileList');
-    if (fileList.children.length>1){
-      fileSelected.innerHTML=`<p>You can't take multiple files</p>`;
-    }
-  }
-}
-}
+
 function updateFileList() {
     const fileList = document.getElementById('fileList');
     fileList.innerHTML = '';
@@ -112,62 +108,21 @@ function selectFeature(feature) {
     if (clickedButton) {
         clickedButton.classList.add('active');
     }
+    if (files.length!=0){
+    showUpload();
     hidechooseAction();
-     if (selectedFeature == 'merge'){
-      showSelect();
-
-    }
-    else{
-      showSelected();
-    }
-    switch (feature) {
-        case 'merge':
-            merge()
-            break; 
-        case 'split':
-            split()
-            break;
-   
-}
-}
-function merge(){
-
-}
-function split(){
-
-}
+}}
 
 
 
 
-// Get references to the select element and the input field
-const splitOptionSelect = document.getElementById('splitOption');
-const splitPagesInput = document.getElementById('splitPages');
-let splitPages = [];
 
-// Add an event listener to the select element
-splitOptionSelect.addEventListener('change', function() {
-  // Check if the selected option is "custom"
-  if(this.value === 'middle') {
-    splitPages=['m'];
-  
-  }
-   else if (this.value === 'odd') {
-    splitPages=['o'];
-  
-  }
-   else if (this.value === 'even') {
-    splitPages=['e'];
-  
-  } 
-  if (this.value === 'custom') {
-    // Show the input field
-    splitPagesInput.style.display = 'block';
-  } else {
-    // Hide the input field
-    splitPagesInput.style.display = 'none';
-  }
-});
+
+
+
+
+
+///checked until here 
 
 const uploadForm = document.getElementById('UploadFile')
 uploadForm.addEventListener('submit',async(e)=>{
@@ -194,7 +149,13 @@ if (jsondata["success"]){
   console.log(sessionId)
 renderPdf(files[0]);
 renderPdfDetails(files[0].name,jsondata['details'][0]);
-renderProcessBtn();
+if (selectedFeature=='split'){
+  renderSplitOptions();
+}
+  renderProcessBtn();
+
+
+
  } 
  else{
   alert(jsondata["error"])
@@ -202,6 +163,53 @@ renderProcessBtn();
 }
 });
 
+function renderSplitOptions(){
+  const PdfDetailPanel = document.getElementById('pdfDetailPanel');
+  
+  const splitOptionDiv = document.createElement('div');
+  splitOptionDiv.innerHTML = `
+  <div>
+                  <span>Splitting Options:
+                  </span>
+               <select id="splitOption">
+                    <option value="m"> Up to Middle</option>
+                    <option value="f"> From Middle</option>
+                    <option value="o">Odd Pages</option>
+                    <option value="e">Even Pages</option>
+                    <option value="c">Custom</option>
+                </select>
+                <input type="text" id="splitPagesCustom" placeholder="1,2,3" style="display: none;"> 
+</div>
+`;
+
+  PdfDetailPanel.appendChild(splitOptionDiv);
+const splitOptionSelect = document.getElementById('splitOption');
+const splitPagesInput = document.getElementById('splitPagesCustom');
+let splitPages = null;
+
+// Add an event listener to the select element
+splitOptionSelect.addEventListener('change', function() {
+  // Check if the selected option is "custom"
+  if (this.value === 'c') {
+    // Show the input field
+    splitPagesInput.style.display = 'block';
+    console.log('split')
+    splitPagesInput.addEventListener('change', function() {
+      splitPages = this.value
+      splitValue=splitPages.split(',');
+      console.log(splitValue)
+      console.log(splitPages);
+    });
+  } else {
+    // Hide the input field
+    splitPages=this.value
+    splitPagesInput.style.display = 'none';
+  }
+});
+
+
+
+}
 
 function renderPdf(pdfFile){
 const pdfPanel = document.getElementById('pdfPanel');
@@ -215,6 +223,7 @@ pdfPanel.innerHTML =`<iframe src=${URL.createObjectURL(pdfFile)} width='600' hei
 function renderPdfDetails(name,details){
     const pdfDetailPanel =document.getElementById('pdfDetailPanel');
     const pdfDetailkeys = ['Page Count','Author','Subject'];
+    noOfPages=details[0];
     let pdfDetailHtml =`<h2>${name}</h2>`
     console.log(details);
 details.forEach((detail,index) => {
@@ -260,8 +269,14 @@ console.log(link);
 renderDownload(fileUrl);
 
 
-  }
-});
+  };
+  else{
+   if (selectedFeature== 'split'){
+     //implement 
+  
+
+
+}}});
 
 }
 
