@@ -5,8 +5,7 @@ __pycache__
 node_modules
 temp
 flask_session
-static/output.css
-static/old.css
 .vscode
 test1.pdf
 test.py
+static/output.css
