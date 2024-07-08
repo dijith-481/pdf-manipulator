@@ -84,11 +84,12 @@ def merge():
 @app.route('/download/<filename>', methods=['get'])
 def download_file(filename):
     file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
+    extension = os.path.splitext(filename)[1]
     if os.path.exists(file_path):
         return send_file(
             file_path,
             as_attachment=True,
-            download_name='sample.docx',
+            download_name=f'download.{extension}',
             mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
     else:
@@ -110,13 +111,49 @@ def docx():
         return jsonify({'success': False, 'error':'session id'})
 
 @app.route('/split',methods=['post'])
-def split():
-    filename=request.files['file1']
-    pageNo=request.form['pageNo']
-    get_file_details(filename)
-    split_pdf(filename,pageNo)
-    files = list_files_in_directory('temp/')
-    return render_template('merge/merge.html', files=files)
+def split(): 
+    sessionId=request.form['sessionId']
+    filename=session['files'][0]
+    inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+    splitType=request.form['splitType']
+    splitValue=None
+    if 'splitValue' in request.form:
+        splitValue=request.form['splitValue'].split(',') 
+    outputFileName = split_pdf(inputFilePath,splitType,splitValue)
+    splitUrl= f'/download1/{outputFileName}'
+    try:
+        
+        
+        
+       
+       return jsonify({'success': True, 'file':splitUrl})
+
+    except:
+        return jsonify({'success': False, 'error':'splitError'})
+
+
+@app.route('/download1/<filename>', methods=['get'])
+def download_file1(filename):
+    file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
+    
+    try:
+        # Replace this with your actual file reading logic
+        with open(file_path, 'rb') as f:
+            file_data = f.read()
+
+
+        
+        
+        # Encode the file data to base64
+        encoded_data = base64.b64encode(file_data).decode('utf-8')
+        
+        return jsonify({
+            'filename': filename,
+            'file_data': encoded_data,
+            'mime_type': 'application/pdf'  # Adjust based on your file type
+        }), 200
+    except Exception as e:
+        return jsonify({'error': filename}), 404
 
 @app.route('/splitCheck')
 def splitCheck():
@@ -143,26 +180,52 @@ def  merge_pdf(pdfs):
         merger.append(PdfReader(pdf))
     merger.write('test.pdf')
     merger.close()
-def split_pdf(pdf,pageNo):
-    pageNo=pageNo.split(',')
-    pageNo=[int(i) for i in pageNo]
-    split=[]
-    
+
+
+def split_pdf(pdf,splitType,splitValue=None):
+
     input_pdf=PdfReader(pdf)
-    prev=0
-    for splitNo in pageNo:
-        split.append(PdfWriter())
+    temp_filename = generate_temp_filename('split.pdf')
+    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
+    totalPages=len(input_pdf.pages)
+    splitPagesList=getSplitPagesList( splitType,totalPages,splitValue)
+    outputPdf=PdfWriter()
+    for pageNo in splitPagesList :
+        outputPdf.add_page(input_pdf.pages[pageNo])
+    outputPdf.write(temp_filepath)        
+    outputPdf.close()        
+    return temp_filename
         
-        for n in range(prev,splitNo):
-            split[-1].add_page(input_pdf.pages[n])
-        prev=splitNo
-    i=0        
-    for pdf in split:
-        
-        pdf.write(f'test{pageNo[i]}.pdf')
-        i+=1
-        pdf.close()
+
     
+          
+            
+    
+        
+    
+
+
+def getSplitPagesList(splitType,totalPages,splitValue=None):
+    splitPagesList=[]
+    if splitType =='m':
+        for i in range(totalPages//2):
+                splitPagesList.append(i)
+    elif splitType =='f':
+        for i in range(totalPages//2,totalPages):
+                splitPagesList.append(i)
+    elif splitType =='o':
+        for i in range(0,totalPages,2):
+                splitPagesList.append(i)
+    elif splitType =='e':
+        for i in range(1,totalPages,2):
+                splitPagesList.append(i)
+    elif splitType =='c':
+        splitPagesList = [int(x) - 1 for x in splitValue]
+
+    return splitPagesList
+
+
+
 
 
 def cleanup_temp_files():

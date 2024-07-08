@@ -1,4 +1,5 @@
 
+
 let files = [];
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
@@ -6,6 +7,7 @@ const fileInputBtn = document.getElementById('inputFileBtn');
 const featureList = document.getElementById('featureList');
 let noOfPages = null;
 let splitValue = null;
+let splitType = 'm';
 let sessionId='';
 let selectedFeature = null;
 
@@ -185,25 +187,44 @@ function renderSplitOptions(){
   PdfDetailPanel.appendChild(splitOptionDiv);
 const splitOptionSelect = document.getElementById('splitOption');
 const splitPagesInput = document.getElementById('splitPagesCustom');
-let splitPages = null;
 
 // Add an event listener to the select element
 splitOptionSelect.addEventListener('change', function() {
   // Check if the selected option is "custom"
+  splitType=this.value
+  console.log(splitType)
   if (this.value === 'c') {
-    // Show the input field
     splitPagesInput.style.display = 'block';
     console.log('split')
     splitPagesInput.addEventListener('change', function() {
-      splitPages = this.value
-      splitValue=splitPages.split(',');
+      splitValue = this.value.split(',').map(Number).filter(num => !isNaN(num)&& num !=0);;
       console.log(splitValue)
-      console.log(splitPages);
+      
+      console.log(splitType);
+      console.log(noOfPages)
+      for (let i = splitValue.length - 1; i >= 0; i--) {
+        const value = splitValue[i];
+        if (value > noOfPages) {
+          alert(`Page ${value} is not available`);
+          console.log('Removing:', value);
+          splitValue.splice(i, 1);
+          console.log(splitValue)
+        } else {
+          console.log('OK:', value);
+        }
+        splitPagesInput.value=splitValue
+        
+      }
+        
+       
+
+  
     });
   } else {
-    // Hide the input field
-    splitPages=this.value
+    splitValue=null;
     splitPagesInput.style.display = 'none';
+    console.log(splitValue)
+    console.log(splitType)
   }
 });
 
@@ -236,6 +257,10 @@ details.forEach((detail,index) => {
     });
     pdfDetailPanel.innerHTML=pdfDetailHtml;
 }
+//test function
+let linkid=''
+
+
 
 function renderProcessBtn(){
   const pdfDetailPanel = document.getElementById('pdfDetailPanel'); 
@@ -252,13 +277,16 @@ const processFile = document.getElementById('processBtn');
 console.log(processFile)
 processFile.addEventListener('submit',async(e)=>{
   e.preventDefault();
-  if (selectedFeature=='convert to docs'){
+  console.log('docx')
+  if (selectedFeature=='convertToDocx'){
     const formData = new FormData();
 formData.append('sessionId', sessionId);
+console.log(formData)
 const response = await fetch('/docx', {
   method: 'POST',
   body: formData
 });
+console.log('waiting')
 const jsondata = await response.json();
 console.log(jsondata)
 console.log(jsondata['file'])
@@ -269,26 +297,61 @@ console.log(link);
 renderDownload(fileUrl);
 
 
-  };
-  else{
-   if (selectedFeature== 'split'){
-     //implement 
-  
+  }
+  else if(selectedFeature== 'split'){
+    if (!(splitType=='c' && splitValue==null)){
+    const formData = new FormData();
+formData.append('sessionId', sessionId);
+formData.append('splitType', splitType);
+if (splitValue){
+  formData.append('splitValue', splitValue);
+}
+console.log(formData)
+const response = await fetch('/split', {
+  method: 'POST',
+  body: formData
+});
+const jsondata = await response.json();
+console.log(jsondata)
+console.log(jsondata['file'])
+const fileUrl = jsondata['file'];
+const link = document.createElement('a');
+link.href = fileUrl;
+console.log(link);
+renderDownload(link);
+linkid=jsondata['file']
 
 
 }}});
 
 }
+//test function
+function renderPdff(url){
+  const pdfPanel = document.getElementById('pdfPanel');
+  
+  pdfPanel.innerHTML =`<iframe src=${url} width='600' height='500'></iframe>`;
+  
+  }
 
-function renderDownload(link){
+
+
+/*function renderDownload(link){
   const pdfPanel = document.getElementById('pdfDetailPanel');
   console.log('done')
   pdfPanel.innerHTML = `<form action="${link}" id="downloadForm">
   <button onClick=fileDownloadStarted()>Download</button>
-</form>`
+</form>`*/
+//test function
+function renderDownload(link){
+  const pdfPanel = document.getElementById('pdfDetailPanel');
+  console.log('done')
+  pdfPanel.innerHTML = `<button id="downloadButton1" onclick="downloadFile1()">Download File</button>`
 
-}
-function fileDownloadStarted(){
+//test function
+
+
+
+/*function fileDownloadStarted(){
   const pdfPanel = document.getElementById('main');
   const form = document.getElementById('downloadForm');
   form.submit();
@@ -298,6 +361,28 @@ function fileDownloadStarted(){
   }, 100);
  
 }
+*/
 
-
-
+}
+function downloadFile1(){
+  fetch(linkid)
+  .then(response => {
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.json();
+})
+.then(data => {
+    const linkSource = `data:${data.mime_type};base64,${data.file_data}`;
+    const downloadLink = document.createElement('a');
+    downloadLink.href = linkSource;
+    downloadLink.download = data.filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+})
+.catch(error => {
+    console.error('Download failed:', error);
+    alert('Failed to download the file. Please try again.');
+})
+  }
