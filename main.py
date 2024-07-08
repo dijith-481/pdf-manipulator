@@ -60,9 +60,6 @@ def upload():
         pt=str(request.files)
         return jsonify({'success': False, 'error':pt})
 
-@app.route('/download',methods=['post'])
-def download():
-   ...
 
 def generate_temp_filename(filename):
     extension = os.path.splitext(filename)[1]
@@ -70,7 +67,7 @@ def generate_temp_filename(filename):
 
 
 
-
+#need to change
 @app.route("/merge",methods=['post'])
 def merge():
     file=[]
@@ -80,7 +77,7 @@ def merge():
         file.append(request.files[file_name])
     merge_pdf(file)
     return send_file('merge/merge.html')
-
+#not used
 @app.route('/downloadsendfile/<filename>', methods=['get'])
 def download_fileSendAsFile(filename):
     file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
@@ -97,71 +94,48 @@ def download_fileSendAsFile(filename):
 
 @app.route("/docx", methods=['post'])
 def docx():
-    sessionId=request.form['sessionId']
-    filename=session['files'][0]
-    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], filename)
-    docxFileName=todocx(temp_filepath)
-    docxUrl= f'/download/{docxFileName}'
-
-
     try:
+        sessionId=request.form['sessionId']
+        filename=session['files'][0]
+        temp_filepath = os.path.join(app.config['TEMP_FOLDER'], filename)
+        docxFileName=todocx(temp_filepath)
+        docxUrl= f'/download/{docxFileName}'
         return jsonify({'success': True, 'file': docxUrl})
-
     except:
-        return jsonify({'success': False, 'error':'session id'})
+        return jsonify({'success': False, 'error':'erorr converting docx'})
 
 @app.route('/split',methods=['post'])
-def split(): 
-    sessionId=request.form['sessionId']
-    filename=session['files'][0]
-    inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
-    splitType=request.form['splitType']
-    splitValue=None
-    if 'splitValue' in request.form:
-        splitValue=request.form['splitValue'].split(',') 
-    outputFileName = split_pdf(inputFilePath,splitType,splitValue)
-    splitUrl= f'/download/{outputFileName}'
+def split():
     try:
-        
-        
-        
-       
-       return jsonify({'success': True, 'file':splitUrl})
-
+        sessionId=request.form['sessionId']
+        filename=session['files'][0]
+        inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+        splitType=request.form['splitType']
+        splitValue=None
+        if 'splitValue' in request.form:
+            splitValue=request.form['splitValue'].split(',') 
+        outputFileName = split_pdf(inputFilePath,splitType,splitValue)
+        splitUrl= f'/download/{outputFileName}'
+        return jsonify({'success': True, 'file':splitUrl})
     except:
-        return jsonify({'success': False, 'error':'splitError'})
+        return jsonify({'success': False, 'error':'erorr splitting'})
 
 
 @app.route('/download/<filename>', methods=['get'])
 def download_file(filename):
     file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
-    
     try:
-        # Replace this with your actual file reading logic
         with open(file_path, 'rb') as f:
             file_data = f.read()
-
-
-        
-        
-        # Encode the file data to base64
         encoded_data = base64.b64encode(file_data).decode('utf-8')
-        
         return jsonify({
+            'success': True,
             'filename': filename,
             'file_data': encoded_data,
             'mime_type': 'application/pdf'  # Adjust based on your file type
         }), 200
     except Exception as e:
-        return jsonify({'error': filename}), 404
-
-@app.route('/splitCheck')
-def splitCheck():
-    filenme=request.files['file1']
-    pageNo=request.form['pageNo']
-    files = list_files_in_directory('temp/')
-    return render_template('merge/merge.html', files=files)
-
+        return jsonify({'sucess': False, 'error': filename}), 404
 
 def todocx(filename):
     pdf_file = filename
@@ -173,7 +147,7 @@ def todocx(filename):
     cv.close()
     return temp_filename
 
-
+#need to check
 def  merge_pdf(pdfs):
     merger=PdfWriter()
     for pdf in pdfs:
@@ -195,16 +169,6 @@ def split_pdf(pdf,splitType,splitValue=None):
     outputPdf.write(temp_filepath)        
     outputPdf.close()        
     return temp_filename
-        
-
-    
-          
-            
-    
-        
-    
-
-
 def getSplitPagesList(splitType,totalPages,splitValue=None):
     splitPagesList=[]
     if splitType =='m':
@@ -223,10 +187,6 @@ def getSplitPagesList(splitType,totalPages,splitValue=None):
         splitPagesList = [int(x) - 1 for x in splitValue]
 
     return splitPagesList
-
-
-
-
 
 def cleanup_temp_files():
     """Deletes temporary files that have exceeded the timeout."""
@@ -249,12 +209,7 @@ def pdfDetails(pdf):
     No_of_pages=len(pdf_reader.pages)
     author=meta.author
     subject=meta.subject
-    try:
-        return (No_of_pages,author,subject)
-        
-        
-    except:
-        return 'error in acessing pdf details'
+    return (No_of_pages,author,subject)
 
 
 
