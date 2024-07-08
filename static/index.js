@@ -149,7 +149,9 @@ console.log(jsondata["details"])
 if (jsondata["success"]){
   sessionId=jsondata["session_id"];
   console.log(sessionId)
-renderPdf(files[0]);
+const pdfFile = URL.createObjectURL(files[0]);
+renderPdf(pdfFile);
+
 renderPdfDetails(files[0].name,jsondata['details'][0]);
 if (selectedFeature=='split'){
   renderSplitOptions();
@@ -235,7 +237,7 @@ splitOptionSelect.addEventListener('change', function() {
 function renderPdf(pdfFile){
 const pdfPanel = document.getElementById('pdfPanel');
 
-pdfPanel.innerHTML =`<iframe src=${URL.createObjectURL(pdfFile)} width='600' height='500'></iframe>`;
+pdfPanel.innerHTML =`<iframe src=${pdfFile} width='600' height='500'></iframe>`;
 
 }
 
@@ -257,8 +259,6 @@ details.forEach((detail,index) => {
     });
     pdfDetailPanel.innerHTML=pdfDetailHtml;
 }
-//test function
-let linkid=''
 
 
 
@@ -318,54 +318,18 @@ const fileUrl = jsondata['file'];
 const link = document.createElement('a');
 link.href = fileUrl;
 console.log(link);
-renderDownload(link);
-linkid=jsondata['file']
+renderDownload(fileUrl);
+
 
 
 }}});
 
 }
-//test function
-function renderPdff(url){
-  const pdfPanel = document.getElementById('pdfPanel');
-  
-  pdfPanel.innerHTML =`<iframe src=${url} width='600' height='500'></iframe>`;
-  
-  }
 
 
-
-/*function renderDownload(link){
-  const pdfPanel = document.getElementById('pdfDetailPanel');
-  console.log('done')
-  pdfPanel.innerHTML = `<form action="${link}" id="downloadForm">
-  <button onClick=fileDownloadStarted()>Download</button>
-</form>`*/
-//test function
+let pdfFile1=null
 function renderDownload(link){
-  const pdfPanel = document.getElementById('pdfDetailPanel');
-  console.log('done')
-  pdfPanel.innerHTML = `<button id="downloadButton1" onclick="downloadFile1()">Download File</button>`
-
-//test function
-
-
-
-/*function fileDownloadStarted(){
-  const pdfPanel = document.getElementById('main');
-  const form = document.getElementById('downloadForm');
-  form.submit();
-  setTimeout(function() {
-     console.log('done')
-  pdfPanel.innerHTML = `Thanks for using Pdf Manipulator`
-  }, 100);
- 
-}
-*/
-
-}
-function downloadFile1(){
-  fetch(linkid)
+  fetch(link)
   .then(response => {
     if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -374,15 +338,15 @@ function downloadFile1(){
 })
 .then(data => {
     const linkSource = `data:${data.mime_type};base64,${data.file_data}`;
-    const downloadLink = document.createElement('a');
-    downloadLink.href = linkSource;
-    downloadLink.download = data.filename;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+    pdfFile1=linkSource;
+    renderPdf(pdfFile1)
+    pdfDetailPanel. innerHTML=`<a href="${linkSource}" download="${data.filename}"><button >Download File</button></a>`;
+    console.log('appended')
+    console.log(linkSource)
+    return pdfFile1
 })
 .catch(error => {
     console.error('Download failed:', error);
     alert('Failed to download the file. Please try again.');
 })
-  }
+}

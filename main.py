@@ -81,8 +81,8 @@ def merge():
     merge_pdf(file)
     return send_file('merge/merge.html')
 
-@app.route('/download/<filename>', methods=['get'])
-def download_file(filename):
+@app.route('/downloadsendfile/<filename>', methods=['get'])
+def download_fileSendAsFile(filename):
     file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
     extension = os.path.splitext(filename)[1]
     if os.path.exists(file_path):
@@ -120,7 +120,7 @@ def split():
     if 'splitValue' in request.form:
         splitValue=request.form['splitValue'].split(',') 
     outputFileName = split_pdf(inputFilePath,splitType,splitValue)
-    splitUrl= f'/download1/{outputFileName}'
+    splitUrl= f'/download/{outputFileName}'
     try:
         
         
@@ -132,8 +132,8 @@ def split():
         return jsonify({'success': False, 'error':'splitError'})
 
 
-@app.route('/download1/<filename>', methods=['get'])
-def download_file1(filename):
+@app.route('/download/<filename>', methods=['get'])
+def download_file(filename):
     file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
     
     try:
