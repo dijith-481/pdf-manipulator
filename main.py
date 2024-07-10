@@ -10,8 +10,10 @@ import pdfminer
 from flask_apscheduler import APScheduler
 import time
 import base64
+import logging
 
 app = Flask(__name__)
+logger =app.logger
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
@@ -28,6 +30,7 @@ TEMP_FILE_TIMEOUT =3600
 
 @app.route("/")
 def index():
+    print('started')
     return render_template('index.html')
 
 
@@ -339,6 +342,9 @@ def job1():
 def main():
     
     app.run(port=int(os.environ.get('PORT', 80)))
+   
     
+    
+
 if __name__ == "__main__":
     main()
