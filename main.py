@@ -6,7 +6,7 @@ from flask_session import Session
 from werkzeug.utils import secure_filename
 from pdf2docx import Converter
 from PyPDF2 import PdfReader,PdfWriter
-import pdfminer
+import fitz
 from flask_apscheduler import APScheduler
 import time
 import base64
@@ -126,15 +126,19 @@ def split():
         return jsonify({'success': True, 'file':splitUrl})
     except:
         return jsonify({'success': False, 'error':'erorr splitting'})
-
+#changing to pymupdf
 @app.route('/encrypt',methods=['post'])
 def encrypt():
+    sessionId=request.form['sessionId']
+    filename=session['files'][0]
+    inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+    outputFileName = generate_temp_filename('encrypted.pdf')
+    outputFilePath= os.path.join(app.config['TEMP_FOLDER'],outputFileName )
+    password=request.form['password']
+    
     try:
-        sessionId=request.form['sessionId']
-        filename=session['files'][0]
-        inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
-        password=request.form['password']
-        outputFileName = encrypt_pdf(inputFilePath,password)
+        
+        encrypt_pdf(inputFilePath,outputFilePath,password)
         encryptUrl= f'/download/{outputFileName}'
         return jsonify({'success': True, 'file':encryptUrl})
     except:
@@ -144,12 +148,12 @@ def decrypt():
     sessionId=request.form['sessionId']
     filename=session['files'][0]
     inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+    outputFileName = generate_temp_filename('encrypted.pdf')
+    outputFilePath= os.path.join(app.config['TEMP_FOLDER'],outputFileName )
     password=request.form['password']
-    
     try:
-        
-        outputFileName = decrypt_pdf(inputFilePath,password)
-        if outputFileName=='err':
+        logtext = decrypt_pdf(inputFilePath,outputFilePath,password)
+        if logtext=='err':
             return jsonify({'success': False, 'error':'Password Mismatched'})
         else:
             compressUrl= f'/download/{outputFileName}'
@@ -240,34 +244,33 @@ def getSplitPagesList(splitType,totalPages,splitValue=None):
 
     return splitPagesList
 
-def encrypt_pdf(pdf,password):
-    input_pdf=PdfReader(pdf)
-    temp_filename = generate_temp_filename('encrypted.pdf')
-    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
-    outputPdf=PdfWriter()
-    for page in input_pdf.pages:
-        outputPdf.add_page(page)
-    outputPdf.encrypt(password)
-    outputPdf.write(temp_filepath)        
-    outputPdf.close() 
-    return temp_filename       
-
-def decrypt_pdf(pdf,password):
-    input_pdf=PdfReader(pdf)
-    if input_pdf.is_encrypted:
-        input_pdf.decrypt(password)
-    temp_filename = generate_temp_filename('encrypted.pdf')
-    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
-    outputPdf=PdfWriter()
-    try:     
-        for page in input_pdf.pages:
-            outputPdf.add_page(page)
+def encrypt_pdf(inputFile,outputFile,password):
+    input_pdf=fitz.open(inputFile)
+    encrypt_meth = fitz.PDF_ENCRYPT_AES_256
+    perm = int(
+        fitz.PDF_PERM_ACCESSIBILITY  
+        | fitz.PDF_PERM_PRINT 
+        | fitz.PDF_PERM_COPY  
+    )
+   
         
-    except:
-        return 'err'
-    outputPdf.write(temp_filepath)        
-    outputPdf.close() 
-    return temp_filename
+    input_pdf.save(
+            outputFile,
+            encryption=encrypt_meth, 
+            user_pw=password,  
+            permissions=perm 
+    )
+    input_pdf.close()
+
+
+def decrypt_pdf(inputFile,outputFile,password):
+    input_pdf=fitz.open(inputFile)
+    if input_pdf.is_encrypted:
+        if input_pdf.authenticate(password):
+                input_pdf.save(outputFile)
+                input_pdf.close()
+        else:
+            return 'err'
 
 def compress_pdf(pdf,compressOption):
     input_pdf=PdfReader(pdf)
