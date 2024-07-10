@@ -5,9 +5,11 @@ const fileInputBtn = document.getElementById("inputFileBtn");
 const featureList = document.getElementById("featureList");
 let noOfPages = null;
 let splitValue = null;
+let password = null;
 let splitType = "m";
 let sessionId = "";
 let selectedFeature = null;
+let compressOption = [];
 
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
@@ -139,9 +141,12 @@ uploadForm.addEventListener("submit", async (e) => {
       renderPdfDetails(files[0].name, jsondata["details"][0]);
       if (selectedFeature == "split") {
         renderSplitOptions();
-      }
-      else if (selectedFeature == "encrypt") {
+      } else if (selectedFeature == "encrypt") {
         renderEncryptOptions();
+      } else if (selectedFeature == "decrypt") {
+        renderDecryptOptions();
+      } else if (selectedFeature == "compress") {
+        renderCompressOptions();
       }
       renderProcessBtn();
     } else {
@@ -173,7 +178,6 @@ function renderSplitOptions() {
   const splitOptionSelect = document.getElementById("splitOption");
   const splitPagesInput = document.getElementById("splitPagesCustom");
 
-  // Add an event listener to the select element
   splitOptionSelect.addEventListener("change", function () {
     // Check if the selected option is "custom"
     splitType = this.value;
@@ -211,9 +215,96 @@ function renderSplitOptions() {
     }
   });
 }
-function renderEncryptOptions(){
-  //yet to implement
+function renderEncryptOptions() {
+  const PdfDetailPanel = document.getElementById("pdfDetailPanel");
+
+  const encryptOptionDiv = document.createElement("div");
+  encryptOptionDiv.innerHTML = `
+                  <span>Choose a Password:
+                  </span>
+                <input type="password" id="encryptPassword" placeholder="use strong password" ">
+                <span>Re-enter Password:
+                  </span>
+                <input type="password" id="encryptPasswordre" placeholder="use strong password" "> 
+`;
+  PdfDetailPanel.appendChild(encryptOptionDiv);
+  let psswrd;
+  const encryptPasswordInput = document.getElementById("encryptPassword");
+  const encryptPasswordreInput = document.getElementById("encryptPasswordre");
+  encryptPasswordInput.addEventListener("change", function () {
+    psswrd = this.value;
+    console.log(password);
+  });
+  const passwordNotMatch = document.createElement("p");
+  passwordNotMatch.style.display = "none";
+  passwordNotMatch.innerHTML = "Password do not match";
+  PdfDetailPanel.appendChild(passwordNotMatch);
+  encryptPasswordreInput.addEventListener("change", function () {
+    if (psswrd != this.value) {
+      alert("Password do not match");
+      passwordNotMatch.style.display = "block";
+
+      password = null;
+    } else {
+      password = psswrd;
+      console.log("Password match");
+      passwordNotMatch.style.display = "none";
+    }
+  });
 }
+function renderDecryptOptions() {
+  const PdfDetailPanel = document.getElementById("pdfDetailPanel");
+
+  const decryptOptionDiv = document.createElement("div");
+  decryptOptionDiv.innerHTML = `
+                  <span>Enter password:
+                  </span>
+                <input type="password" id="decryptPassword" placeholder="password" ">
+                 
+`;
+  PdfDetailPanel.appendChild(decryptOptionDiv);
+  const decryptPasswordInput = document.getElementById("decryptPassword");
+  decryptPasswordInput.addEventListener("change", function () {
+    password = this.value;
+    console.log(password);
+  });
+}
+function renderCompressOptions() {
+  const PdfDetailPanel = document.getElementById("pdfDetailPanel");
+
+  const compressOptionDiv = document.createElement("div");
+  compressOptionDiv.innerHTML = `
+  
+                  <span>Compress Options:
+                  </span><br>
+               <input type="checkbox" name="compressOption" value="d"><span>Remove Duplicates</span><br>
+               <input type="checkbox" name="compressOption" value="i" ><span>Remove Images</span><br>
+               <input type="checkbox" name="compressOption" value="l"><span>Lossless</span>
+               
+
+`;
+
+  PdfDetailPanel.appendChild(compressOptionDiv);
+  const compressOptionInput = document.querySelectorAll(
+    'input[name="compressOption"]'
+  );
+  console.log("checkbox");
+  compressOptionInput.forEach((checkbox) => {
+    console.log("check");
+    checkbox.addEventListener("change", function () {
+      console.log("c");
+      const value = this.value;
+      if (checkbox.checked) {
+        compressOption.push(value);
+      } else {
+        compressOption.filter((item) => item !== value);
+        console.log("value");
+      }
+      console.log(compressOption);
+    });
+  });
+}
+
 function renderPdf(pdfFile) {
   const pdfPanel = document.getElementById("pdfPanel");
 
@@ -223,17 +314,21 @@ function renderPdf(pdfFile) {
 function renderPdfDetails(name, details) {
   const pdfDetailPanel = document.getElementById("pdfDetailPanel");
   const pdfDetailkeys = ["Page Count", "Author", "Subject"];
-  noOfPages = details[0];
-  let pdfDetailHtml = `<h2>${name}</h2>`;
-  console.log(details);
-  details.forEach((detail, index) => {
-    if (detail) {
-      pdfDetailHtml += `<p>${pdfDetailkeys[index]}: ${detail}</p>`;
-    }
+  if (!details) {
+    pdfDetailPanel.innerHTML = "";
+  } else {
+    noOfPages = details[0];
+    let pdfDetailHtml = `<h2>${name}</h2>`;
+    console.log(details);
+    details.forEach((detail, index) => {
+      if (detail) {
+        pdfDetailHtml += `<p>${pdfDetailkeys[index]}: ${detail}</p>`;
+      }
 
-    console.log(detail);
-  });
-  pdfDetailPanel.innerHTML = pdfDetailHtml;
+      console.log(detail);
+    });
+    pdfDetailPanel.innerHTML = pdfDetailHtml;
+  }
 }
 
 function renderProcessBtn() {
@@ -269,10 +364,7 @@ function renderProcessBtn() {
       link.href = fileUrl;
       console.log(link);
       renderDownload(fileUrl);
-    }
-    
-    
-    else if (selectedFeature == "split") {
+    } else if (selectedFeature == "split") {
       if (!(splitType == "c" && splitValue == null)) {
         const formData = new FormData();
         formData.append("sessionId", sessionId);
@@ -294,32 +386,71 @@ function renderProcessBtn() {
         console.log(link);
         renderDownload(fileUrl);
       }
-    }
-    else if (selectedFeature == "encrypt") {
-      
-        const formData = new FormData();
-        formData.append("sessionId", sessionId);
-        formData.append("splitType", splitType);
-        if (splitValue) {
-          formData.append("splitValue", splitValue);
-        }
-        console.log(formData);
-        const response = await fetch("/split", {
-          method: "POST",
-          body: formData,
-        });
-        const jsondata = await response.json();
-        console.log(jsondata);
+    } else if (selectedFeature == "encrypt" && password) {
+      const formData = new FormData();
+      formData.append("sessionId", sessionId);
+      formData.append("password", password);
+      console.log(formData);
+      const response = await fetch("/encrypt", {
+        method: "POST",
+        body: formData,
+      });
+      const jsondata = await response.json();
+      console.log(jsondata);
+      console.log(jsondata["file"]);
+      const fileUrl = jsondata["file"];
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      console.log(link);
+      renderDownload(fileUrl);
+    } else if (selectedFeature == "decrypt" && password) {
+      const formData = new FormData();
+      formData.append("sessionId", sessionId);
+      formData.append("password", password);
+      console.log(formData);
+      const response = await fetch("/decrypt", {
+        method: "POST",
+        body: formData,
+      });
+      const jsondata = await response.json();
+      console.log(jsondata);
+      if (jsondata["success"]) {
         console.log(jsondata["file"]);
         const fileUrl = jsondata["file"];
         const link = document.createElement("a");
         link.href = fileUrl;
         console.log(link);
         renderDownload(fileUrl);
-    }
-
-
+      } else {
+        console.log(jsondata["error"]);
+        alert(jsondata["error"]);
+      }
+    } else if (selectedFeature == "compress" && compressOption.length > 0) {
+  const formData = new FormData();
+  formData.append("sessionId", sessionId);
+  formData.append("compressOption", compressOption)
+  console.log(formData);
+  const response = await fetch("/compress", {
+    method: "POST",
+    body: formData,
   });
+  const jsondata = await response.json();
+      console.log(jsondata);
+      if (jsondata["success"]) {
+        console.log(jsondata["file"]);
+        const fileUrl = jsondata["file"];
+        const link = document.createElement("a");
+        link.href = fileUrl;
+        console.log(link);
+        renderDownload(fileUrl);
+      } else {
+        console.log(jsondata["error"]);
+        alert(jsondata["error"]);
+      }
+
+}
+
+});
 }
 
 let pdfFile1 = null;

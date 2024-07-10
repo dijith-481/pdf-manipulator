@@ -48,8 +48,12 @@ def upload():
             temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
             try:
                 file.save(temp_filepath)
+
                 uploaded_files.append(temp_filename)
-                fileDetails.append(pdfDetails(file))
+                try:
+                    fileDetails.append(pdfDetails(file))
+                except:
+                    None
             except:
                 return jsonify({'success': False, 'error':'Error saving file'})
         session_id = str(uuid.uuid4())
@@ -120,6 +124,51 @@ def split():
     except:
         return jsonify({'success': False, 'error':'erorr splitting'})
 
+@app.route('/encrypt',methods=['post'])
+def encrypt():
+    try:
+        sessionId=request.form['sessionId']
+        filename=session['files'][0]
+        inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+        password=request.form['password']
+        outputFileName = encrypt_pdf(inputFilePath,password)
+        encryptUrl= f'/download/{outputFileName}'
+        return jsonify({'success': True, 'file':encryptUrl})
+    except:
+        return jsonify({'success': False, 'error':'erorr encrypting'})
+@app.route('/decrypt',methods=['post'])
+def decrypt():
+    sessionId=request.form['sessionId']
+    filename=session['files'][0]
+    inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+    password=request.form['password']
+    
+    try:
+        
+        outputFileName = decrypt_pdf(inputFilePath,password)
+        if outputFileName=='err':
+            return jsonify({'success': False, 'error':'Password Mismatched'})
+        else:
+            compressUrl= f'/download/{outputFileName}'
+            return jsonify({'success': True, 'file':compressUrl})
+    except:
+        return jsonify({'success': False, 'error':'erorr decrypting'})
+
+@app.route('/compress',methods=['post'])
+def compress():
+    try:
+        sessionId=request.form['sessionId']
+        filename=session['files'][0]
+        inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+        compressOption=request.form['compressOption']
+        compressOption=compressOption.split(',')
+        outputFileName = compress_pdf(inputFilePath,compressOption)
+        
+        compressUrl= f'/download/{outputFileName}'
+        return jsonify({'success': True, 'file':compressUrl})
+        #return jsonify({'success': False, 'error':f'{str(compressOption)}'})
+    except:
+        return jsonify({'success': False, 'error':'erorr compressing'})
 
 @app.route('/download/<filename>', methods=['get'])
 def download_file(filename):
@@ -187,6 +236,66 @@ def getSplitPagesList(splitType,totalPages,splitValue=None):
         splitPagesList = [int(x) - 1 for x in splitValue]
 
     return splitPagesList
+
+def encrypt_pdf(pdf,password):
+    input_pdf=PdfReader(pdf)
+    temp_filename = generate_temp_filename('encrypted.pdf')
+    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
+    outputPdf=PdfWriter()
+    for page in input_pdf.pages:
+        outputPdf.add_page(page)
+    outputPdf.encrypt(password)
+    outputPdf.write(temp_filepath)        
+    outputPdf.close() 
+    return temp_filename       
+
+def decrypt_pdf(pdf,password):
+    input_pdf=PdfReader(pdf)
+    if input_pdf.is_encrypted:
+        input_pdf.decrypt(password)
+    temp_filename = generate_temp_filename('encrypted.pdf')
+    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
+    outputPdf=PdfWriter()
+    try:     
+        for page in input_pdf.pages:
+            outputPdf.add_page(page)
+        
+    except:
+        return 'err'
+    outputPdf.write(temp_filepath)        
+    outputPdf.close() 
+    return temp_filename
+
+def compress_pdf(pdf,compressOption):
+    input_pdf=PdfReader(pdf)
+    temp_filename = generate_temp_filename('compressed.pdf')
+    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
+    outputPdf=PdfWriter()
+    if 'd' in compressOption:
+        for page in input_pdf.pages:
+            outputPdf.add_page(page)
+        outputPdf.add_metadata(input_pdf.metadata)
+        input_pdf=outputPdf
+        outputPdf.close() 
+    if 'i' in compressOption:
+        outputPdf=PdfWriter()
+        for page in input_pdf.pages:
+            outputPdf.add_page(page)
+        outputPdf.remove_images()
+        input_pdf=outputPdf
+        outputPdf.close() 
+    if 'l' in compressOption:
+        outputPdf=PdfWriter()
+        for page in input_pdf.pages:
+            page.compress_content_streams()
+            outputPdf.add_page(page)    
+    outputPdf.write(temp_filepath)        
+    outputPdf.close() 
+    return temp_filename
+
+
+
+
 
 def cleanup_temp_files():
     """Deletes temporary files that have exceeded the timeout."""
