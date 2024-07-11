@@ -9,7 +9,8 @@ let password = null;
 let splitType = "m";
 let sessionId = "";
 let selectedFeature = null;
-let compressOption = [];
+let compressOption =null;
+let watermark =null
 
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
@@ -147,6 +148,8 @@ uploadForm.addEventListener("submit", async (e) => {
         renderDecryptOptions();
       } else if (selectedFeature == "compress") {
         renderCompressOptions();
+      }else if (selectedFeature == "watermark") {
+        renderWatermarkOptions();
       }
       renderProcessBtn();
     } else {
@@ -277,31 +280,37 @@ function renderCompressOptions() {
   
                   <span>Compress Options:
                   </span><br>
-               <input type="checkbox" name="compressOption" value="d"><span>Remove Duplicates</span><br>
-               <input type="checkbox" name="compressOption" value="i" ><span>Remove Images</span><br>
-               <input type="checkbox" name="compressOption" value="l"><span>Lossless</span>
+                  <select id="compressOption">
+                  <option value="l"> low</option>
+                  <option value="m"> medium</option>
+                  <option value="h">High</option>
+                  
+              </select>
                
 
 `;
 
   PdfDetailPanel.appendChild(compressOptionDiv);
-  const compressOptionInput = document.querySelectorAll(
-    'input[name="compressOption"]'
-  );
-  console.log("checkbox");
-  compressOptionInput.forEach((checkbox) => {
-    console.log("check");
-    checkbox.addEventListener("change", function () {
-      console.log("c");
-      const value = this.value;
-      if (checkbox.checked) {
-        compressOption.push(value);
-      } else {
-        compressOption.filter((item) => item !== value);
-        console.log("value");
-      }
-      console.log(compressOption);
-    });
+  const compressOptionInput =document.getElementById("compressOption");
+  console.log(compressOptionInput)
+  compressOptionInput.addEventListener("change", function () {
+    compressOption = this.value;
+    console.log(compressOption);
+  });
+
+}
+function renderWatermarkOptions() {
+  const PdfDetailPanel = document.getElementById("pdfDetailPanel");
+  const watermarkOptionDiv = document.createElement("div");
+  watermarkOptionDiv.innerHTML = `<span>Enter water mark text
+                  </span><br>
+                  <input type="text" id="watermarkText" placeholder="water mark text" ">
+               `
+  PdfDetailPanel.appendChild(watermarkOptionDiv);
+  const watermarkText = document.getElementById("watermarkText");
+  watermarkText.addEventListener("change", function () {
+    watermark = this.value;
+    console.log(watermark);
   });
 }
 
@@ -379,12 +388,18 @@ function renderProcessBtn() {
         });
         const jsondata = await response.json();
         console.log(jsondata);
+        if (jsondata["success"]) {
         console.log(jsondata["file"]);
         const fileUrl = jsondata["file"];
         const link = document.createElement("a");
         link.href = fileUrl;
         console.log(link);
         renderDownload(fileUrl);
+        }
+        else {
+          console.log(jsondata["error"]);
+          alert(jsondata["error"]);
+        }
       }
     } else if (selectedFeature == "encrypt" && password) {
       const formData = new FormData();
@@ -425,7 +440,7 @@ function renderProcessBtn() {
         console.log(jsondata["error"]);
         alert(jsondata["error"]);
       }
-    } else if (selectedFeature == "compress" && compressOption.length > 0) {
+    } else if (selectedFeature == "compress" && compressOption) {
   const formData = new FormData();
   formData.append("sessionId", sessionId);
   formData.append("compressOption", compressOption)
@@ -438,23 +453,44 @@ function renderProcessBtn() {
       console.log(jsondata);
       if (jsondata["success"]) {
         console.log(jsondata["file"]);
+
         const fileUrl = jsondata["file"];
-        const link = document.createElement("a");
-        link.href = fileUrl;
-        console.log(link);
-        renderDownload(fileUrl);
+       const compressPercent =jsondata['compress_percent']
+        renderDownload(fileUrl,compressPercent);
       } else {
         console.log(jsondata["error"]);
         alert(jsondata["error"]);
       }
 
-}
+}else if (selectedFeature == "watermark" && watermark) {
+  const formData = new FormData();
+  formData.append("sessionId", sessionId);
+  formData.append("watermark", watermark)
+  console.log(formData);
+  const response = await fetch("/watermark", {
+    method: "POST",
+    body: formData,
+  });
+  const jsondata = await response.json();
+      console.log(jsondata);
+      if (jsondata["success"]) {
+        console.log(jsondata["file"]);
+
+        const fileUrl = jsondata["file"];
+       
+        renderDownload(fileUrl);
+      } else {
+        console.log(jsondata["error"]);
+        alert(jsondata["error"]);
+      }
+    
+    }
 
 });
 }
 
 let pdfFile1 = null;
-function renderDownload(link) {
+function renderDownload(link,CompressPercent=null) {
   fetch(link)
     .then((response) => {
       if (!response.ok) {
@@ -466,7 +502,11 @@ function renderDownload(link) {
       const linkSource = `data:${data.mime_type};base64,${data.file_data}`;
       pdfFile1 = linkSource;
       renderPdf(pdfFile1);
-      pdfDetailPanel.innerHTML = `<a href="${linkSource}" download="${data.filename}"><button >Download File</button></a>`;
+      let text = `<a href="${linkSource}" download="${data.filename}"><button >Download File</button></a>`;
+      if (CompressPercent!=null) {
+          text+=`<br><p>compressed percentage:${CompressPercent}%</p>`
+      }
+      pdfDetailPanel.innerHTML=text
       console.log("appended");
       console.log(linkSource);
       return pdfFile1;

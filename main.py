@@ -113,19 +113,24 @@ def docx():
 
 @app.route('/split',methods=['post'])
 def split():
+    sessionId=request.form['sessionId']
+    filename=session['files'][0]
+    inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+    outputFileName = generate_temp_filename('encrypted.pdf')
+    outputFilePath= os.path.join(app.config['TEMP_FOLDER'],outputFileName )
+    splitType=request.form['splitType']
+    splitValue=None
+    if 'splitValue' in request.form:
+        splitValue=request.form['splitValue'].split(',')
+    
     try:
-        sessionId=request.form['sessionId']
-        filename=session['files'][0]
-        inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
-        splitType=request.form['splitType']
-        splitValue=None
-        if 'splitValue' in request.form:
-            splitValue=request.form['splitValue'].split(',') 
-        outputFileName = split_pdf(inputFilePath,splitType,splitValue)
+        err=split_pdf(inputFilePath,outputFilePath,splitType,splitValue)
+        
         splitUrl= f'/download/{outputFileName}'
         return jsonify({'success': True, 'file':splitUrl})
+        #return jsonify({'success': False, 'error':f"{str(err)}"})
     except:
-        return jsonify({'success': False, 'error':'erorr splitting'})
+        return jsonify({'success': False, 'error':'err'})
 #changing to pymupdf
 @app.route('/encrypt',methods=['post'])
 def encrypt():
@@ -163,17 +168,19 @@ def decrypt():
 
 @app.route('/compress',methods=['post'])
 def compress():
+    sessionId=request.form['sessionId']
+    filename=session['files'][0]
+    inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+    outputFileName = generate_temp_filename('compressed.pdf')
+    outputFilePath= os.path.join(app.config['TEMP_FOLDER'],outputFileName )
+    compressOption=request.form['compressOption']
+    compress_percent= compress_pdf(inputFilePath,outputFilePath,compressOption)
     try:
-        sessionId=request.form['sessionId']
-        filename=session['files'][0]
-        inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
-        compressOption=request.form['compressOption']
-        compressOption=compressOption.split(',')
-        outputFileName = compress_pdf(inputFilePath,compressOption)
+        
         
         compressUrl= f'/download/{outputFileName}'
-        return jsonify({'success': True, 'file':compressUrl})
-        #return jsonify({'success': False, 'error':f'{str(compressOption)}'})
+        return jsonify({'success': True, 'file':compressUrl,'compress_percent':compress_percent})
+        #return jsonify({'success': False, 'error':f'{str(compress_percent)}'})
     except:
         return jsonify({'success': False, 'error':'erorr compressing'})
 
@@ -212,19 +219,24 @@ def  merge_pdf(pdfs):
     merger.close()
 
 
-def split_pdf(pdf,splitType,splitValue=None):
-
-    input_pdf=PdfReader(pdf)
-    temp_filename = generate_temp_filename('split.pdf')
-    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
-    totalPages=len(input_pdf.pages)
+def split_pdf(inputFile,outputFile,splitType,splitValue=None):
+    input_pdf=fitz.open(inputFile)
+    totalPages=len(input_pdf)
     splitPagesList=getSplitPagesList( splitType,totalPages,splitValue)
-    outputPdf=PdfWriter()
+    output_pdf=fitz.open()
     for pageNo in splitPagesList :
-        outputPdf.add_page(input_pdf.pages[pageNo])
-    outputPdf.write(temp_filepath)        
-    outputPdf.close()        
-    return temp_filename
+        output_pdf.insert_pdf(input_pdf, from_page=pageNo, to_page=pageNo)
+    try:
+        
+        
+        
+        
+        output_pdf.save(outputFile)
+        input_pdf.close()
+        output_pdf.close()
+        return 'done'
+    except:
+        return splitPagesList
 def getSplitPagesList(splitType,totalPages,splitValue=None):
     splitPagesList=[]
     if splitType =='m':
@@ -272,32 +284,50 @@ def decrypt_pdf(inputFile,outputFile,password):
         else:
             return 'err'
 
-def compress_pdf(pdf,compressOption):
-    input_pdf=PdfReader(pdf)
-    temp_filename = generate_temp_filename('compressed.pdf')
-    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
-    outputPdf=PdfWriter()
-    if 'd' in compressOption:
-        for page in input_pdf.pages:
-            outputPdf.add_page(page)
-        outputPdf.add_metadata(input_pdf.metadata)
-        input_pdf=outputPdf
-        outputPdf.close() 
-    if 'i' in compressOption:
-        outputPdf=PdfWriter()
-        for page in input_pdf.pages:
-            outputPdf.add_page(page)
-        outputPdf.remove_images()
-        input_pdf=outputPdf
-        outputPdf.close() 
-    if 'l' in compressOption:
-        outputPdf=PdfWriter()
-        for page in input_pdf.pages:
-            page.compress_content_streams()
-            outputPdf.add_page(page)    
-    outputPdf.write(temp_filepath)        
-    outputPdf.close() 
-    return temp_filename
+def compress_pdf(inputFile,outputFile,compressOption):
+    original_size = os.path.getsize(inputFile)
+    input_pdf = fitz.open(inputFile)
+    if compressOption == 'l':
+            
+            params = {
+                'deflate':True,  
+                'clean':True,  
+                'garbage':1,  
+                'linear':True  
+
+            }
+    elif  compressOption == 'h':
+        params = {
+                'deflate':True,  
+                'clean':True,  
+                'garbage':1,  
+                'linear':True, 
+                'pretty':False,
+                'ascii':False 
+
+            }
+    else:
+        params = {
+                'deflate':True,  
+                'clean':True,  
+                'garbage':2,  
+                'linear':True  
+
+            }
+    input_pdf.save(outputFile,**params)    
+    
+    
+    try:    
+        
+        
+        
+        input_pdf.close()
+        compressed_size = os.path.getsize(outputFile)
+        compression_percent = (1 - compressed_size / original_size) * 100
+        return compression_percent
+        #return 'done'
+    except:
+                return compressOption
 
 
 
