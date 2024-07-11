@@ -184,6 +184,24 @@ def compress():
     except:
         return jsonify({'success': False, 'error':'erorr compressing'})
 
+@app.route('/watermark',methods=['post'])
+def watermark():
+    sessionId=request.form['sessionId']
+    filename=session['files'][0]
+    inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+    outputFileName = generate_temp_filename('compressed.pdf')
+    outputFilePath= os.path.join(app.config['TEMP_FOLDER'],outputFileName )
+    watermark=request.form['watermark']
+    watermarkOption=request.form['watermarkOption']
+    
+    try:
+        
+        watermark_pdf(inputFilePath,outputFilePath,watermark,watermarkOption)
+        watermarkUrl= f'/download/{outputFileName}'
+        return jsonify({'success': True, 'file':watermarkUrl})
+        #return jsonify({'success': False, 'error':err})
+    except:
+        return jsonify({'success': False, 'error':'erorr watermarking'})
 @app.route('/download/<filename>', methods=['get'])
 def download_file(filename):
     file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
@@ -329,7 +347,45 @@ def compress_pdf(inputFile,outputFile,compressOption):
     except:
                 return compressOption
 
+def watermark_pdf(inputFile,outputFile,watermark,pos):
+    input_pdf=fitz.open(inputFile)
+    for i,page in enumerate(input_pdf):
+        if watermark=='<pg>':
+           text=str(i+1)
+        else:
+            text=watermark
+        rect=page.rect
+        fontsize=12
+        x,y=getPos(pos,rect.width,rect.height)
+        p=fitz.Point(x, y)
+            
+           
+            
+            
+            
+            
+                
+        page.insert_text(
+        p,  # position
+        text,
+        
+        fontsize=fontsize,
+        color=(0, 0, 0),  # Light gray color
+        rotate=0
+    )
+    
+    input_pdf.save(outputFile)
+    input_pdf.close()   
 
+def getPos(pos,w,h):
+    if pos=='tl':
+        return w/8,h/24
+    elif pos=='tr':
+        return 6*w/8,h/24
+    elif pos=='bl':
+        return w/8,23*h/24
+    elif pos=='br':
+        return 6*w/8,23*h/24
 
 
 

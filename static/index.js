@@ -10,7 +10,8 @@ let splitType = "m";
 let sessionId = "";
 let selectedFeature = null;
 let compressOption =null;
-let watermark =null
+let watermark =null;
+let watermarkOption=null;
 
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
@@ -148,7 +149,7 @@ uploadForm.addEventListener("submit", async (e) => {
         renderDecryptOptions();
       } else if (selectedFeature == "compress") {
         renderCompressOptions();
-      }else if (selectedFeature == "watermark") {
+      }else if (selectedFeature == "addText") {
         renderWatermarkOptions();
       }
       renderProcessBtn();
@@ -304,13 +305,40 @@ function renderWatermarkOptions() {
   const watermarkOptionDiv = document.createElement("div");
   watermarkOptionDiv.innerHTML = `<span>Enter water mark text
                   </span><br>
-                  <input type="text" id="watermarkText" placeholder="water mark text" ">
+                  <span>Page No</span><input type="radio" id="watermarkPageNo" value="<pg>">
+                  <input type="text" id="watermarkText" placeholder="water mark text"><br>
+                  <select id="watermarkOption">
+                  <option value="tr"> top right</option>
+                  <option value="tl"> top left</option>
+                  <option value="br">bottom right</option>
+                  <option value="bl">bottom left</option>
+                  
+              </select>
                `
   PdfDetailPanel.appendChild(watermarkOptionDiv);
   const watermarkText = document.getElementById("watermarkText");
   watermarkText.addEventListener("change", function () {
     watermark = this.value;
     console.log(watermark);
+  });
+  const watermarkOptionSelect = document.getElementById("watermarkOption");
+  watermarkOptionSelect.addEventListener("change", function () {
+    watermarkOption = this.value;
+    console.log(watermarkOption);
+  });
+  const watermarkPageNo = document.getElementById("watermarkPageNo");
+  watermarkPageNo.addEventListener("change", function () {
+    if (this.checked) {
+      watermark = "<pg>";
+      watermarkText.style.display = "none";
+    } else {
+      watermark = null;
+      watermarkText.style.display = "block";
+    
+    }
+    
+    console.log(watermark)
+    console.log(watermarkOption);
   });
 }
 
@@ -462,10 +490,11 @@ function renderProcessBtn() {
         alert(jsondata["error"]);
       }
 
-}else if (selectedFeature == "watermark" && watermark) {
+}else if (selectedFeature == "addText" && watermark  && watermarkOption) {
   const formData = new FormData();
   formData.append("sessionId", sessionId);
-  formData.append("watermark", watermark)
+  formData.append("watermark", watermark);
+  formData.append("watermarkOption",watermarkOption);
   console.log(formData);
   const response = await fetch("/watermark", {
     method: "POST",
