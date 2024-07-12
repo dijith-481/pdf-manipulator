@@ -11,6 +11,8 @@ from flask_apscheduler import APScheduler
 import time
 import base64
 import logging
+import mimetypes
+from zipfile import ZipFile 
 
 app = Flask(__name__)
 logger =app.logger
@@ -72,7 +74,8 @@ def generate_temp_filename(filename):
     extension = os.path.splitext(filename)[1]
     return secure_filename(str(uuid.uuid4())) + extension
 
-
+def generate_temp_folder():
+    return secure_filename(str(uuid.uuid4()))
 
 #need to change
 @app.route("/merge",methods=['post'])
@@ -87,17 +90,38 @@ def merge():
 #not used
 @app.route('/downloadsendfile/<filename>', methods=['get'])
 def download_fileSendAsFile(filename):
-    file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
-    extension = os.path.splitext(filename)[1]
-    if os.path.exists(file_path):
-        return send_file(
-            file_path,
-            as_attachment=True,
-            download_name=f'download.{extension}',
-            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        )
+    if os.path.isdir(os.path.join(app.config['TEMP_FOLDER'], filename)):
+            directory_path = os.path.join(app.config['TEMP_FOLDER'], filename)
+            if not os.path.isdir(directory_path):
+                return jsonify({'success': False, 'error': 'Directory not found'}), 404
+                
+    
+        
+            
+            if os.path.exists(directory_path):
+                directory_path=zip_directory(directory_path)
+                return send_file(
+                    directory_path,
+                    as_attachment=True,
+                    download_name=f'download.zip',
+                    mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                )
+            else:
+                return 'error'
+
     else:
-        return jsonify({'error': file_path}), 404
+
+        file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
+        extension = os.path.splitext(filename)[1]
+        if os.path.exists(file_path):
+            return send_file(
+                file_path,
+                as_attachment=True,
+                download_name=f'download.{extension}',
+                mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
+        else:
+            return jsonify({'error': file_path}), 404
 
 @app.route("/docx", methods=['post'])
 def docx():
@@ -202,21 +226,88 @@ def watermark():
         #return jsonify({'success': False, 'error':err})
     except:
         return jsonify({'success': False, 'error':'erorr watermarking'})
-@app.route('/download/<filename>', methods=['get'])
-def download_file(filename):
-    file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
+
+@app.route('/image',methods=['post'])
+def image():
+    sessionId=request.form['sessionId']
+    filename=session['files'][0]
+    inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+    outputFileFolder = generate_temp_folder()
+    os.makedirs(os.path.join(app.config['TEMP_FOLDER'], outputFileFolder))
+    outputFilePath= os.path.join(app.config['TEMP_FOLDER'], outputFileFolder )
     try:
-        with open(file_path, 'rb') as f:
-            file_data = f.read()
-        encoded_data = base64.b64encode(file_data).decode('utf-8')
-        return jsonify({
-            'success': True,
-            'filename': filename,
-            'file_data': encoded_data,
-            'mime_type': 'application/pdf'  # Adjust based on your file type
-        }), 200
-    except Exception as e:
-        return jsonify({'sucess': False, 'error': filename}), 404
+        
+        imageType=request.form['imageType']
+        imageValue=None
+        if 'imageValue' in request.form:
+            imageValue=request.form['imageValue'].split(',')
+        image_pdf(inputFilePath,outputFilePath,imageType,imageValue)
+        
+        imageUrl= f'/download/{outputFileFolder}'
+        return jsonify({'success': True, 'file':imageUrl})
+        #return jsonify({'success': False, 'error':f"{str(err)}done"})
+    except:
+        return jsonify({'success': False, 'error':'err'})
+
+
+
+@app.route('/download/<filename>', methods=['get'])
+
+def download_file(filename):
+    if os.path.isdir(os.path.join(app.config['TEMP_FOLDER'], filename)):
+        directory_path = os.path.join(app.config['TEMP_FOLDER'], filename)
+        if not os.path.isdir(directory_path):
+            return jsonify({'success': False, 'error': 'Directory not found'}), 404
+        files_data = []
+        try:
+        
+            for filenames in os.listdir(directory_path):
+                
+                file_path = os.path.join(directory_path, filenames)
+                if os.path.isfile(file_path):
+                    try:
+
+                        with open(file_path, 'rb') as f:
+                            file_data = f.read()
+                        encoded_data = base64.b64encode(file_data).decode('utf-8')
+                        files_data.append({
+                            'filename': filenames,
+                            'file_data': encoded_data,
+                            'mime_type': get_mime_type(filenames)
+                        })
+                    except Exception as e:
+                        # Log the error and continue with the next file
+                        #print(f"Error reading file {filenames}: {str(e)}")
+                        return jsonify({'success': False, 'error': f"{str(file_path)}"}), 404
+
+            if not files_data:
+                return jsonify({'success': False, 'error': 'No files found in the directory'}), 404
+            try:
+                return jsonify({
+                    'success': True,
+                    'directory_name': filename,
+                    'files': files_data
+                }), 200
+            except:
+                return jsonify({'success': False, 'error': 'Directory found'}), 404
+        except:
+            return jsonify({'success': False, 'error': 'Directory not found'}), 404
+    else:
+
+        file_path = os.path.join(app.config['TEMP_FOLDER'], filename)
+        try:
+            with open(file_path, 'rb') as f:
+                file_data = f.read()
+            encoded_data = base64.b64encode(file_data).decode('utf-8')
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'file_data': encoded_data,
+                'mime_type': get_mime_type(filename)  # Adjust based on your file type
+            }), 200
+        except Exception as e:
+            return jsonify({'sucess': False, 'error': filename}), 404
+
 
 def todocx(filename):
     pdf_file = filename
@@ -240,7 +331,7 @@ def  merge_pdf(pdfs):
 def split_pdf(inputFile,outputFile,splitType,splitValue=None):
     input_pdf=fitz.open(inputFile)
     totalPages=len(input_pdf)
-    splitPagesList=getSplitPagesList( splitType,totalPages,splitValue)
+    splitPagesList=getPagesList( splitType,totalPages,splitValue)
     output_pdf=fitz.open()
     for pageNo in splitPagesList :
         output_pdf.insert_pdf(input_pdf, from_page=pageNo, to_page=pageNo)
@@ -255,25 +346,30 @@ def split_pdf(inputFile,outputFile,splitType,splitValue=None):
         return 'done'
     except:
         return splitPagesList
-def getSplitPagesList(splitType,totalPages,splitValue=None):
-    splitPagesList=[]
-    if splitType =='m':
-        for i in range(totalPages//2):
-                splitPagesList.append(i)
-    elif splitType =='f':
-        for i in range(totalPages//2,totalPages):
-                splitPagesList.append(i)
-    elif splitType =='o':
-        for i in range(0,totalPages,2):
-                splitPagesList.append(i)
-    elif splitType =='e':
-        for i in range(1,totalPages,2):
-                splitPagesList.append(i)
-    elif splitType =='c':
-        splitPagesList = [int(x) - 1 for x in splitValue]
+def getPagesList(Type,totalPages,Value=None):
+    try:
+        PagesList=[]
+        if Type =='a':
+            for i in range(totalPages):
+                    PagesList.append(i)
+        if Type =='m':
+            for i in range(totalPages//2):
+                    PagesList.append(i)
+        elif Type =='f':
+            for i in range(totalPages//2,totalPages):
+                    PagesList.append(i)
+        elif Type =='o':
+            for i in range(0,totalPages,2):
+                    PagesList.append(i)
+        elif Type =='e':
+            for i in range(1,totalPages,2):
+                    PagesList.append(i)
+        elif Type =='c':
+            PagesList = [int(x) - 1 for x in Value]
 
-    return splitPagesList
-
+        return PagesList
+    except:
+        return 'pagelisterr'
 def encrypt_pdf(inputFile,outputFile,password):
     input_pdf=fitz.open(inputFile)
     encrypt_meth = fitz.PDF_ENCRYPT_AES_256
@@ -377,6 +473,20 @@ def watermark_pdf(inputFile,outputFile,watermark,pos):
     input_pdf.save(outputFile)
     input_pdf.close()   
 
+def image_pdf(inputFile,outputFile,imageType,imageValue=None):
+    input_pdf=fitz.open(inputFile)
+    totalPages=len(input_pdf)
+    imagePagesList=getPagesList(imageType,totalPages,imageValue)
+    
+        
+    for pageNo in imagePagesList :
+        page=input_pdf[pageNo]
+        pix=page.get_pixmap()
+        
+        pix.save(f"{outputFile}/page {pageNo+1}.png")
+            
+    input_pdf.close()
+
 def getPos(pos,w,h):
     if pos=='tl':
         return w/8,h/24
@@ -412,19 +522,35 @@ def pdfDetails(pdf):
     subject=meta.subject
     return (No_of_pages,author,subject)
 
+def get_mime_type(filename):
+    mime_type, _ = mimetypes.guess_type(filename)
+    return mime_type or 'application/octet-stream'
 
 
 
+def zip_directory(directory):
+    zip_filename =generate_temp_filename('zip.zip')
+    zip_filepath = os.path.join(app.config['TEMP_FOLDER'], zip_filename)
+
+    file_paths=[]
+    try:
+        
+        for root, dirs,files in os.walk(directory):
+            
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                file_paths.append(file_path) 
+        with ZipFile(zip_filepath,'w') as zip: 
+            for file in file_paths: 
+                zip.write(file) 
+        return zip_filepath
+    except:
+        return 'faeli'
 
 
 @scheduler.task('interval', id='do_job_1', seconds=3600, misfire_grace_time=900)
 def job1():
     cleanup_temp_files()  # Call the cleanup function
-
-
-
-
-
 
 
 

@@ -5,13 +5,15 @@ const fileInputBtn = document.getElementById("inputFileBtn");
 const featureList = document.getElementById("featureList");
 let noOfPages = null;
 let splitValue = null;
+let imageValue=null;
+let imageType ="a"
 let password = null;
 let splitType = "m";
 let sessionId = "";
 let selectedFeature = null;
 let compressOption =null;
 let watermark =null;
-let watermarkOption=null;
+let watermarkOption='tr';
 
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
@@ -45,16 +47,25 @@ function handleFiles(newFiles) {
   updateFileList();
   if (!selectedFeature) {
     showChooseAction();
-  } else {
+    hideDropZone();
+  } else  {
+    if (selectedFeature=='merge' ){
+      if (files.length>1){
+        showUpload();
+        
+      }
+    }else{
     showUpload();
     hideDropZone();
+    }
+    
+    
   }
 }
 function showChooseAction() {
   const specifyAction = document.getElementById("selectAction");
   specifyAction.style.display = "block";
   specifyAction.innerHTML = `<p>Select an action<p>`;
-  hideDropZone();
 }
 function hidechooseAction() {
   document.getElementById("selectAction").style.display = "none";
@@ -71,14 +82,35 @@ function showUpload() {
 function hideUpload() {
   document.getElementById("uploadForm").style.display = "none";
 }
-
+function showRemoveSomeFile() {
+  const specifyAction = document.getElementById("removeSomeFile");
+  specifyAction.style.display = "block";
+  specifyAction.innerHTML = `<p>remove some file<p>`;
+}
+function hideRemoveSomeFile() {
+  document.getElementById("removeSomeFile").style.display = "none";
+}
 function removeFile(index) {
   files.splice(index, 1);
   updateFileList();
-  if (files.length == 0) {
+  if (selectedFeature=='merge'){
+    if (files.length<2){
+      hideUpload();
+      showDropZone();
+    }
+  }
+  else if (files.length == 0) {
     showDropZone();
     hidechooseAction();
     hideUpload();
+  }
+  else if (files.length>1) {
+    showRemoveSomeFile();
+   
+  }
+  else if (files.length==1){
+    hideRemoveSomeFile();
+    showUpload();
   }
 }
 
@@ -106,10 +138,34 @@ function selectFeature(feature) {
   if (clickedButton) {
     clickedButton.classList.add("active");
   }
-  if (files.length != 0) {
+  if (selectedFeature == "merge"){
+    if (files.length > 1) {
+      showUpload();
+    } else {
+      hideUpload();
+
+    }
+    hidechooseAction();
+    showDropZone();
+  }
+  else if (files.length == 0) {
     showUpload();
     hidechooseAction();
+    hideDropZone();
   }
+  else if (files.length>1) {
+    showRemoveSomeFile();
+    hideUpload();
+    hideDropZone();
+  }else{
+    showUpload();
+    hidechooseAction();
+    hideDropZone();
+  
+  }
+
+  
+  
 }
 
 ///checked until here
@@ -151,6 +207,8 @@ uploadForm.addEventListener("submit", async (e) => {
         renderCompressOptions();
       }else if (selectedFeature == "addText") {
         renderWatermarkOptions();
+      }else if (selectedFeature=="image"){
+        renderImageOptions()
       }
       renderProcessBtn();
     } else {
@@ -341,6 +399,67 @@ function renderWatermarkOptions() {
     console.log(watermarkOption);
   });
 }
+function renderImageOptions() {
+  const PdfDetailPanel = document.getElementById("pdfDetailPanel");
+
+  const imageOptionDiv = document.createElement("div");
+  imageOptionDiv.innerHTML = `
+  <div>
+                  <span>image Options:
+                  </span>
+               <select id="imageOption">
+                    <option value="a"> all pages</option>
+                    <option value="m"> Up to Middle</option>
+                    <option value="f"> From Middle</option>
+                    <option value="o">Odd Pages</option>
+                    <option value="e">Even Pages</option>
+                    <option value="c">Custom</option>
+                </select>
+                <input type="text" id="imagePagesCustom" placeholder="1,2,3" style="display: none;"> 
+</div>
+`;
+
+  PdfDetailPanel.appendChild(imageOptionDiv);
+  const imageOptionSelect = document.getElementById("imageOption");
+  const imagePagesInput = document.getElementById("imagePagesCustom");
+
+  imageOptionSelect.addEventListener("change", function () {
+    // Check if the selected option is "custom"
+    imageType = this.value;
+    console.log(imageType);
+    if (this.value === "c") {
+      imagePagesInput.style.display = "block";
+      console.log("image");
+      imagePagesInput.addEventListener("change", function () {
+        imageValue = this.value
+          .image(",")
+          .map(Number)
+          .filter((num) => !isNaN(num) && num != 0);
+        console.log(imageValue);
+
+        console.log(imageType);
+        console.log(noOfPages);
+        for (let i = imageValue.length - 1; i >= 0; i--) {
+          const value = imageValue[i];
+          if (value > noOfPages) {
+            alert(`Page ${value} is not available`);
+            console.log("Removing:", value);
+            imageValue.splice(i, 1);
+            console.log(imageValue);
+          } else {
+            console.log("OK:", value);
+          }
+          imagePagesInput.value = imageValue;
+        }
+      });
+    } else {
+      imageValue = null;
+      imagePagesInput.style.display = "none";
+      console.log(imageValue);
+      console.log(imageType);
+    }
+  });
+}
 
 function renderPdf(pdfFile) {
   const pdfPanel = document.getElementById("pdfPanel");
@@ -490,7 +609,7 @@ function renderProcessBtn() {
         alert(jsondata["error"]);
       }
 
-}else if (selectedFeature == "addText" && watermark  && watermarkOption) {
+    }else if (selectedFeature == "addText" && watermark  && watermarkOption) {
   const formData = new FormData();
   formData.append("sessionId", sessionId);
   formData.append("watermark", watermark);
@@ -513,7 +632,31 @@ function renderProcessBtn() {
         alert(jsondata["error"]);
       }
     
-    }
+    }else if (selectedFeature == "image" && imageType) {
+      if (!(imageType == "c" && imageValue == null)) {
+        const formData = new FormData();
+        formData.append("sessionId", sessionId);
+        formData.append("imageType", imageType);
+        if (imageValue) {
+          formData.append("imageValue", imageValue);
+        }
+        console.log(formData);
+        const response = await fetch("/image", {
+          method: "POST",
+          body: formData,
+        });
+        const jsondata = await response.json();
+        console.log(jsondata);
+        if (jsondata["success"]) {
+          console.log(jsondata["file"]);
+          const fileUrl = jsondata["file"];
+          renderDownload(fileUrl);
+        }
+        else {
+          console.log(jsondata["error"]);
+          alert(jsondata["error"]);
+        }
+      }}
 
 });
 }
@@ -522,26 +665,40 @@ let pdfFile1 = null;
 function renderDownload(link,CompressPercent=null) {
   fetch(link)
     .then((response) => {
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
+      //if (!response.ok) {
+      //  throw new Error();
+      //}
       return response.json();
     })
     .then((data) => {
-      const linkSource = `data:${data.mime_type};base64,${data.file_data}`;
-      pdfFile1 = linkSource;
-      renderPdf(pdfFile1);
-      let text = `<a href="${linkSource}" download="${data.filename}"><button >Download File</button></a>`;
-      if (CompressPercent!=null) {
-          text+=`<br><p>compressed percentage:${CompressPercent}%</p>`
+      if (data.error !=null){console.log(data.error)}
+      else if (data.files !=null){
+        
+        let text=''
+        data.files.forEach((file) => {
+          const linkSource = `data:${file.mime_type};base64,${file.file_data}`;
+           text+=  `<a href="${linkSource}" download="${file.filename}"><button >${(file.filename.split(".")[0])}</button></a>`;
+        
+        });
+        text += `<a href="/downloadsendfile/${data.directory_name}"><button >Download All</button></a>`;
+        pdfDetailPanel.innerHTML=text
       }
-      pdfDetailPanel.innerHTML=text
-      console.log("appended");
-      console.log(linkSource);
-      return pdfFile1;
-    })
-    .catch((error) => {
+      else{
+        const linkSource = `data:${data.mime_type};base64,${data.file_data}`;
+        pdfFile1 = linkSource;
+        renderPdf(pdfFile1);
+        let text = `<a href="${linkSource}" download="${data.filename}"><button >Download File</button></a>`;
+        if (CompressPercent!=null) {
+            text+=`<br><p>compressed percentage:${CompressPercent}%</p>`
+        }
+        pdfDetailPanel.innerHTML=text
+        console.log("appended");
+        console.log(linkSource);
+        return pdfFile1;
+        
+}});
+    /*.catch((error) => {
       console.error("Download failed:", error);
       alert("Failed to download the file. Please try again.");
-    });
+    });*/
 }
