@@ -3,15 +3,28 @@ module.exports = {
   content: ["./static/**/*.js", "./templates/**/*.html"],
   theme: {
     extend: {
+      fontFamily: {
+        Rubik: ['Noto Sans', 'sans-serif'],
+      },
       colors: {
         transparent: 'transparent',
         black: '#000',
         white: '#fff',
-        gray: {
-          100: '#008080',
-          // ...
-          900: '#1a202c',
-        },
+        'edgewater': {
+          '50': '#f1f8f5',
+          '100': '#deede5',
+          '200': '#bddbcd',
+          '300': '#93c2af',
+          '400': '#65a28c',
+          '500': '#448570',
+          '600': '#316a58',
+          '700': '#285448',
+          '800': '#21443a',
+          '900': '#1c3831',
+          '950': '#0f1f1b',
+      },
+      
+      
     },
   },
   plugins: [],

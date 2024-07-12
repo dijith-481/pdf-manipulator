@@ -178,7 +178,7 @@ uploadForm.addEventListener("submit", async (e) => {
     files.forEach((file, index) => {
       formData.append(`file${index + 1}`, file);
     });
-
+    showLoading("Uploading")
     //console.log(files)
 
     console.log(formData);
@@ -186,13 +186,15 @@ uploadForm.addEventListener("submit", async (e) => {
       method: "POST",
       body: formData,
     });
+   
     const jsondata = await response.json();
+    hideLoading();
     console.log(jsondata);
     console.log(jsondata["session_id"]);
     console.log(jsondata["details"]);
     if (jsondata["success"]) {
-      sessionId = jsondata["session_id"];
-      console.log(sessionId);
+     // sessionId = jsondata["session_id"];
+      //console.log(sessionId);
       const pdfFile = URL.createObjectURL(files[0]);
       renderPdf(pdfFile);
 
@@ -503,24 +505,7 @@ function renderProcessBtn() {
   processFile.addEventListener("submit", async (e) => {
     e.preventDefault();
     console.log("docx");
-    if (selectedFeature == "convertToDocx") {
-      const formData = new FormData();
-      formData.append("sessionId", sessionId);
-      console.log(formData);
-      const response = await fetch("/docx", {
-        method: "POST",
-        body: formData,
-      });
-      console.log("waiting");
-      const jsondata = await response.json();
-      console.log(jsondata);
-      console.log(jsondata["file"]);
-      const fileUrl = jsondata["file"];
-      const link = document.createElement("a");
-      link.href = fileUrl;
-      console.log(link);
-      renderDownload(fileUrl);
-    } else if (selectedFeature == "split") {
+     if (selectedFeature == "split") {
       if (!(splitType == "c" && splitValue == null)) {
         const formData = new FormData();
         formData.append("sessionId", sessionId);
@@ -656,7 +641,29 @@ function renderProcessBtn() {
           console.log(jsondata["error"]);
           alert(jsondata["error"]);
         }
-      }}
+    }
+    }else if (selectedFeature == "merge") {
+      const formData = new FormData();
+      formData.append("sessionId", sessionId);
+      console.log(formData);
+      const response = await fetch("/merge", {
+        method: "POST",
+        body: formData,
+      });
+      const jsondata = await response.json();
+      console.log(jsondata);
+      if (jsondata["success"]) {
+        console.log(jsondata["file"]);
+        const fileUrl = jsondata["file"];
+        const link = document.createElement("a");
+        link.href = fileUrl;
+        console.log(link);
+        renderDownload(fileUrl);
+      } else {
+        console.log(jsondata["error"]);
+        alert(jsondata["error"]);
+      }
+    }
 
 });
 }
@@ -702,3 +709,18 @@ function renderDownload(link,CompressPercent=null) {
       alert("Failed to download the file. Please try again.");
     });*/
 }
+function showLoading(message = "Processing...") {
+  console.log('loading')
+  document.getElementById('loading-overlay').style.display = 'block';
+  document.getElementById('loading-message').querySelector('p').textContent = message;
+  document.body.style.overflow = 'hidden'; // Prevent scrolling
+}
+
+// Function to hide the loading overlay
+function hideLoading() {
+  document.getElementById('loading-overlay').style.display = 'none';
+  document.body.style.overflow = 'auto'; // Re-enable scrolling
+}
+
+
+

@@ -61,10 +61,10 @@ def upload():
                     None
             except:
                 return jsonify({'success': False, 'error':'Error saving file'})
-        session_id = str(uuid.uuid4())
-        store_session_data(session_id,uploaded_files)
         
-        return jsonify({'success': True, 'session_id': session_id, 'details':fileDetails})
+        store_session_data(uploaded_files)
+        
+        return jsonify({'success': True,  'details':fileDetails})
     except:
         pt=str(request.files)
         return jsonify({'success': False, 'error':pt})
@@ -80,14 +80,22 @@ def generate_temp_folder():
 #need to change
 @app.route("/merge",methods=['post'])
 def merge():
-    file=[]
-    if 'file1' not in request.files or 'file2' not in request.files:
-        return "No file part"
-    for file_name in request.files:
-        file.append(request.files[file_name])
-    merge_pdf(file)
-    return send_file('merge/merge.html')
-#not used
+    filenames=session['files']
+    inputFilePaths=[]
+    for filename in filenames:
+        inputFilePaths.append(os.path.join(app.config['TEMP_FOLDER'], filename))
+    outputFileName = generate_temp_filename('merge.pdf')
+    outputFilePath= os.path.join(app.config['TEMP_FOLDER'],outputFileName )
+    
+    try:
+        merge_pdf(inputFilePaths,outputFilePath)
+        
+        mergeUrl= f'/download/{outputFileName}'
+        return jsonify({'success': True, 'file':mergeUrl})
+        #return jsonify({'success': False, 'error':f"{str(err)}"})
+    except:
+        return jsonify({'success': False, 'error':'err'})
+
 @app.route('/downloadsendfile/<filename>', methods=['get'])
 def download_fileSendAsFile(filename):
     if os.path.isdir(os.path.join(app.config['TEMP_FOLDER'], filename)):
@@ -123,24 +131,12 @@ def download_fileSendAsFile(filename):
         else:
             return jsonify({'error': file_path}), 404
 
-@app.route("/docx", methods=['post'])
-def docx():
-    try:
-        sessionId=request.form['sessionId']
-        filename=session['files'][0]
-        temp_filepath = os.path.join(app.config['TEMP_FOLDER'], filename)
-        docxFileName=todocx(temp_filepath)
-        docxUrl= f'/download/{docxFileName}'
-        return jsonify({'success': True, 'file': docxUrl})
-    except:
-        return jsonify({'success': False, 'error':'erorr converting docx'})
-
 @app.route('/split',methods=['post'])
 def split():
-    sessionId=request.form['sessionId']
+    #sessionId=request.form['sessionId']
     filename=session['files'][0]
     inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
-    outputFileName = generate_temp_filename('encrypted.pdf')
+    outputFileName = generate_temp_filename('split.pdf')
     outputFilePath= os.path.join(app.config['TEMP_FOLDER'],outputFileName )
     splitType=request.form['splitType']
     splitValue=None
@@ -308,24 +304,16 @@ def download_file(filename):
         except Exception as e:
             return jsonify({'sucess': False, 'error': filename}), 404
 
-
-def todocx(filename):
-    pdf_file = filename
-    temp_filename = generate_temp_filename('document.docx')
-    temp_filepath = os.path.join(app.config['TEMP_FOLDER'], temp_filename)
-    docx_file = temp_filepath
-    cv = Converter(pdf_file)
-    cv.convert(docx_file)    
-    cv.close()
-    return temp_filename
-
 #need to check
-def  merge_pdf(pdfs):
-    merger=PdfWriter()
-    for pdf in pdfs:
-        merger.append(PdfReader(pdf))
-    merger.write('test.pdf')
-    merger.close()
+def  merge_pdf(inputFiles,outputFile):
+    output_pdf = fitz.open()
+    for inputfile in inputFiles:
+        input_pdf = fitz.open(inputfile)
+        output_pdf.insert_pdf(input_pdf)
+        input_pdf.close()
+    output_pdf.save(outputFile)
+    output_pdf.close()
+    
 
 
 def split_pdf(inputFile,outputFile,splitType,splitValue=None):
@@ -508,8 +496,8 @@ def cleanup_temp_files():
             os.remove(file_path)
 
 
-def store_session_data(uuid, filenames):
-    session['id']= uuid
+def store_session_data( filenames):
+    #session['id']= uuid
     session['files']=[]
     for filename in (filenames):
         session['files'].append(filename)
