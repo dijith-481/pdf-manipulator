@@ -1,3 +1,5 @@
+
+
 let files = [];
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
@@ -9,63 +11,92 @@ let imageValue=null;
 let imageType ="a"
 let password = null;
 let splitType = "m";
-let sessionId = "";
 let selectedFeature = null;
 let compressOption =null;
 let watermark =null;
 let watermarkOption='tr';
-
+//to style dragover behavior of dropzone
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropZone.classList.add("dragover");
 });
-
 dropZone.addEventListener("dragleave", () => {
   dropZone.classList.remove("dragover");
 });
-
+//call handle files function when file is added
 dropZone.addEventListener("drop", (e) => {
   e.preventDefault();
   dropZone.classList.remove("dragover");
   handleFiles(e.dataTransfer.files);
 });
+//set file input value to null
 fileInputBtn.addEventListener("click", () => {
   fileInput.value = null;
 });
+//call handle files when file is added through file input
 fileInput.addEventListener("change", (e) => handleFiles(e.target.files));
-
+//handles the gives file
 function handleFiles(newFiles) {
   for (let file of newFiles) {
     if (file.type === "application/pdf") {
-      files.push(file);
+      
+      files.push(file); //add file to files array
       console.log(file);
     } else {
       alert(`${file.name} is not a PDF file and was not added.`);
-      //implement printing file not of type pdf
     }
   }
-  updateFileList();
-  if (!selectedFeature) {
-    showChooseAction();
-    hideDropZone();
-  } else  {
-    if (selectedFeature=='merge' ){
+  updateFileList(); //calls function to update file list
+  }
+  //add file to file list container
+function updateFileList() {
+  const fileList = document.getElementById("fileList");
+  fileList.innerHTML = "";
+  files.forEach((file, index) => {
+    const fileItem = document.createElement("div");
+    fileItem.className = "file-item";
+    fileItem.innerHTML = `
+            <span class="overflow-hidden text-ellipses">${file.name}</span>
+            <button class="remove-btn" onclick="removeFile(${index})">Remove</button>
+        `;
+    fileList.appendChild(fileItem);
+  });
+  showMessage();
+  
+}
+//checks and show relevent containers during upload
+function showMessage(){
+  if (!selectedFeature) { //check if any action is selected
+    showChooseAction(); //show choose an action cotainer
+    hideDropZone(); //hide the drop zone container
+  } else {
+    hidechooseAction(); //hide the choose action container
+    if(selectedFeature=='merge') {  //handles if action is merge
+      showDropZone();
       if (files.length>1){
         showUpload();
-        
+      }else{
+        hideUpload();
       }
+    } 
+    else if (files.length==1){
+      hideRemoveSomeFile();
+      hideDropZone();
+      showUpload();
+
+    }else if(files.length>1){
+      showRemoveSomeFile();
+      hideDropZone()
+      hideUpload();
     }else{
-    showUpload();
-    hideDropZone();
-    }
-    
-    
-  }
+      hideRemoveSomeFile()
+      showDropZone();
+      hideUpload();
+    }}
 }
 function showChooseAction() {
-  const specifyAction = document.getElementById("selectAction");
-  specifyAction.style.display = "block";
-  specifyAction.innerHTML = `<p>Select an action<p>`;
+  document.getElementById("selectAction").style.display ="flex";
+  
 }
 function hidechooseAction() {
   document.getElementById("selectAction").style.display = "none";
@@ -83,51 +114,18 @@ function hideUpload() {
   document.getElementById("uploadForm").style.display = "none";
 }
 function showRemoveSomeFile() {
-  const specifyAction = document.getElementById("removeSomeFile");
-  specifyAction.style.display = "block";
-  specifyAction.innerHTML = `<p>remove some file<p>`;
+  document.getElementById("removeSomeFile").style.display="flex";
+  
 }
 function hideRemoveSomeFile() {
   document.getElementById("removeSomeFile").style.display = "none";
 }
+//remove file from file list
 function removeFile(index) {
   files.splice(index, 1);
   updateFileList();
-  if (selectedFeature=='merge'){
-    if (files.length<2){
-      hideUpload();
-      showDropZone();
-    }
-  }
-  else if (files.length == 0) {
-    showDropZone();
-    hidechooseAction();
-    hideUpload();
-  }
-  else if (files.length>1) {
-    showRemoveSomeFile();
-   
-  }
-  else if (files.length==1){
-    hideRemoveSomeFile();
-    showUpload();
-  }
 }
-
-function updateFileList() {
-  const fileList = document.getElementById("fileList");
-  fileList.innerHTML = "";
-  files.forEach((file, index) => {
-    const fileItem = document.createElement("div");
-    fileItem.className = "file-item";
-    fileItem.innerHTML = `
-            <span>${file.name}</span>
-            <button class="remove-btn" onclick="removeFile(${index})">Remove</button>
-        `;
-    fileList.appendChild(fileItem);
-  });
-}
-
+//set style to acton containers
 function selectFeature(feature) {
   selectedFeature = feature;
   const items = featureList.getElementsByClassName("feature-item");
@@ -138,38 +136,15 @@ function selectFeature(feature) {
   if (clickedButton) {
     clickedButton.classList.add("active");
   }
-  if (selectedFeature == "merge"){
-    if (files.length > 1) {
-      showUpload();
-    } else {
-      hideUpload();
-
-    }
-    hidechooseAction();
-    showDropZone();
-  }
-  else if (files.length == 0) {
-    showUpload();
-    hidechooseAction();
-    hideDropZone();
-  }
-  else if (files.length>1) {
-    showRemoveSomeFile();
-    hideUpload();
-    hideDropZone();
-  }else{
-    showUpload();
-    hidechooseAction();
-    hideDropZone();
+  showMessage();
   
-  }
 
   
   
 }
 
-///checked until here
 
+//handle uploading file
 const uploadForm = document.getElementById("UploadFile");
 uploadForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -178,27 +153,22 @@ uploadForm.addEventListener("submit", async (e) => {
     files.forEach((file, index) => {
       formData.append(`file${index + 1}`, file);
     });
-    showLoading("Uploading")
-    //console.log(files)
-
+    showLoading("Uploading") //show processing overlay
     console.log(formData);
-    const response = await fetch("/upload", {
+    const response = await fetch("/upload", { //send files to server
       method: "POST",
       body: formData,
     });
    
     const jsondata = await response.json();
-    hideLoading();
+    hideLoading();//hide processing overlay
     console.log(jsondata);
-    console.log(jsondata["session_id"]);
     console.log(jsondata["details"]);
     if (jsondata["success"]) {
-     // sessionId = jsondata["session_id"];
-      //console.log(sessionId);
       const pdfFile = URL.createObjectURL(files[0]);
-      renderPdf(pdfFile);
-
-      renderPdfDetails(files[0].name, jsondata["details"][0]);
+      renderPdf(pdfFile); //render the uploaded file in pdf panel
+      renderPdfDetails(files[0].name, jsondata["details"][0]); //render pdf details
+      //render options based on action
       if (selectedFeature == "split") {
         renderSplitOptions();
       } else if (selectedFeature == "encrypt") {
@@ -215,9 +185,245 @@ uploadForm.addEventListener("submit", async (e) => {
       renderProcessBtn();
     } else {
       alert(jsondata["error"]);
+      console.log(jsondata["error"]);//print the error text returned from server
     }
   }
 });
+
+//render the file in pdf panel 
+function renderPdf(pdfUrl) {
+  const pdfPanel = document.getElementById("pdfPanel");
+  pdfPanel.innerHTML = `<iframe src=${pdfUrl}  class="w-full aspect-3/4"  style="border:none;"></iframe>`;
+}
+//renders pdf details
+function renderPdfDetails(name, details) {
+  const pdfDetailPanel = document.getElementById("pdfDetailPanel");
+  const pdfDetailkeys = ["Page Count", "Author", "Subject"];
+  if (!details) {
+    pdfDetailPanel.innerHTML = "";
+  } else {
+    noOfPages = details[0];//get total number of pages
+    let pdfDetailHtml = `<h2 class="text-ellispses overflow-hidden">${name}</h2>`;
+    details.forEach((detail, index) => {
+      if (detail) {
+        pdfDetailHtml += `<p>${pdfDetailkeys[index]}: ${detail}</p>`;
+      }
+    });
+    pdfDetailPanel.innerHTML = pdfDetailHtml;
+  }
+}
+//renders button to submit  action and options
+function renderProcessBtn() {
+  const pdfDetailPanel = document.getElementById("pdfDetailPanel");
+  const form = document.createElement("form");
+  form.id = "processBtn";
+  form.enctype = "multipart/form-data";
+  const button = document.createElement("button");
+  button.className = "process-btn";
+  button.textContent = selectedFeature;
+  form.appendChild(button);
+  pdfDetailPanel.appendChild(form);
+
+  const processFile = document.getElementById("processBtn");
+  processFile.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    //handles the submit as split
+     if (selectedFeature == "split") {
+      if (!(splitType == "c" && splitValue == null)) {
+        const formData = new FormData();
+        
+        formData.append("splitType", splitType);
+        if (splitValue) {
+          formData.append("splitValue", splitValue);
+        }
+        const response = await fetch("/split", {
+          method: "POST",
+          body: formData,
+        });
+        const jsondata = await response.json();
+        console.log(jsondata);
+        if (jsondata["success"]) {
+        console.log(jsondata["file"]);
+        const fileUrl = jsondata["file"];
+        const link = document.createElement("a");
+        link.href = fileUrl;
+        console.log(link);
+        renderDownload(fileUrl);
+        }
+        else {
+          console.log(jsondata["error"]);
+          alert(jsondata["error"]);
+        }
+      }
+    } else if (selectedFeature == "encrypt" && password) {
+      const formData = new FormData();
+      formData.append("password", password);
+      console.log(formData);
+      const response = await fetch("/encrypt", {
+        method: "POST",
+        body: formData,
+      });
+      const jsondata = await response.json();
+      console.log(jsondata);
+      console.log(jsondata["file"]);
+      const fileUrl = jsondata["file"];
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      console.log(link);
+      renderDownload(fileUrl);
+    } else if (selectedFeature == "decrypt" && password) {
+      const formData = new FormData();
+      formData.append("password", password);
+      console.log(formData);
+      const response = await fetch("/decrypt", {
+        method: "POST",
+        body: formData,
+      });
+      const jsondata = await response.json();
+      console.log(jsondata);
+      if (jsondata["success"]) {
+        console.log(jsondata["file"]);
+        const fileUrl = jsondata["file"];
+        const link = document.createElement("a");
+        link.href = fileUrl;
+        console.log(link);
+        renderDownload(fileUrl);
+      } else {
+        console.log(jsondata["error"]);
+        alert(jsondata["error"]);
+      }
+    } else if (selectedFeature == "compress" && compressOption) {
+  const formData = new FormData();
+  formData.append("compressOption", compressOption)
+  console.log(formData);
+  const response = await fetch("/compress", {
+    method: "POST",
+    body: formData,
+  });
+  const jsondata = await response.json();
+      console.log(jsondata);
+      if (jsondata["success"]) {
+        console.log(jsondata["file"]);
+
+        const fileUrl = jsondata["file"];
+       const compressPercent =jsondata['compress_percent']
+        renderDownload(fileUrl,compressPercent);
+      } else {
+        console.log(jsondata["error"]);
+        alert(jsondata["error"]);
+      }
+
+    }else if (selectedFeature == "addText" && watermark  && watermarkOption) {
+  const formData = new FormData();
+  formData.append("sessionId", sessionId);
+  formData.append("watermark", watermark);
+  formData.append("watermarkOption",watermarkOption);
+  console.log(formData);
+  const response = await fetch("/watermark", {
+    method: "POST",
+    body: formData,
+  });
+  const jsondata = await response.json();
+      console.log(jsondata);
+      if (jsondata["success"]) {
+        console.log(jsondata["file"]);
+
+        const fileUrl = jsondata["file"];
+       
+        renderDownload(fileUrl);
+      } else {
+        console.log(jsondata["error"]);
+        alert(jsondata["error"]);
+      }
+    
+    }else if (selectedFeature == "image" && imageType) {
+      if (!(imageType == "c" && imageValue == null)) {
+        const formData = new FormData();
+        formData.append("imageType", imageType);
+        if (imageValue) {
+          formData.append("imageValue", imageValue);
+        }
+        console.log(formData);
+        const response = await fetch("/image", {
+          method: "POST",
+          body: formData,
+        });
+        const jsondata = await response.json();
+        console.log(jsondata);
+        if (jsondata["success"]) {
+          console.log(jsondata["file"]);
+          const fileUrl = jsondata["file"];
+          renderDownload(fileUrl);
+        }
+        else {
+          console.log(jsondata["error"]);
+          alert(jsondata["error"]);
+        }
+    }
+    }else if (selectedFeature == "merge") {
+      const formData = new FormData();
+      formData.append("sessionId", sessionId);
+      console.log(formData);
+      const response = await fetch("/merge", {
+        method: "POST",
+        body: formData,
+      });
+      const jsondata = await response.json();
+      console.log(jsondata);
+      if (jsondata["success"]) {
+        console.log(jsondata["file"]);
+        const fileUrl = jsondata["file"];
+        const link = document.createElement("a");
+        link.href = fileUrl;
+        console.log(link);
+        renderDownload(fileUrl);
+      } else {
+        console.log(jsondata["error"]);
+        alert(jsondata["error"]);
+      }
+    }
+
+
+    const formData = new FormData();
+          if(type){
+          formData.append("Type", Type);
+          }
+          if (Value) {
+            formData.append("splitValue", Value);
+          }
+          if (password) {
+            formData.append("password", password);
+          }
+          showLoading("Processing")
+          const response = await fetch(`/${action}`, {
+            method: "POST",
+            body: formData,
+          });
+          const jsondata = await response.json();
+          hideLoading()
+          console.log(jsondata);
+          if (jsondata["success"]) {
+          console.log(jsondata["file"]);
+          const fileUrl = jsondata["file"];
+          if(jsondata["compress_percent"]){
+            const compressPercent =jsondata['compress_percent']
+            renderDownload(fileUrl,compressPercent);
+          }else{
+             renderDownload(fileUrl);
+          }
+         
+          }
+          else {
+            console.log(jsondata["error"]);
+            alert(jsondata["error"]);
+          }
+        
+
+});
+}
+
+
+
 
 function renderSplitOptions() {
   const PdfDetailPanel = document.getElementById("pdfDetailPanel");
@@ -463,211 +669,6 @@ function renderImageOptions() {
   });
 }
 
-function renderPdf(pdfFile) {
-  const pdfPanel = document.getElementById("pdfPanel");
-
-  pdfPanel.innerHTML = `<iframe src=${pdfFile} width='600' height='500'></iframe>`;
-}
-
-function renderPdfDetails(name, details) {
-  const pdfDetailPanel = document.getElementById("pdfDetailPanel");
-  const pdfDetailkeys = ["Page Count", "Author", "Subject"];
-  if (!details) {
-    pdfDetailPanel.innerHTML = "";
-  } else {
-    noOfPages = details[0];
-    let pdfDetailHtml = `<h2>${name}</h2>`;
-    console.log(details);
-    details.forEach((detail, index) => {
-      if (detail) {
-        pdfDetailHtml += `<p>${pdfDetailkeys[index]}: ${detail}</p>`;
-      }
-
-      console.log(detail);
-    });
-    pdfDetailPanel.innerHTML = pdfDetailHtml;
-  }
-}
-
-function renderProcessBtn() {
-  const pdfDetailPanel = document.getElementById("pdfDetailPanel");
-  const form = document.createElement("form");
-  form.id = "processBtn";
-  form.enctype = "multipart/form-data";
-  const button = document.createElement("button");
-  button.className = "process-btn";
-  button.textContent = selectedFeature;
-  form.appendChild(button);
-  pdfDetailPanel.appendChild(form);
-
-  const processFile = document.getElementById("processBtn");
-  console.log(processFile);
-  processFile.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    console.log("docx");
-     if (selectedFeature == "split") {
-      if (!(splitType == "c" && splitValue == null)) {
-        const formData = new FormData();
-        formData.append("sessionId", sessionId);
-        formData.append("splitType", splitType);
-        if (splitValue) {
-          formData.append("splitValue", splitValue);
-        }
-        console.log(formData);
-        const response = await fetch("/split", {
-          method: "POST",
-          body: formData,
-        });
-        const jsondata = await response.json();
-        console.log(jsondata);
-        if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-        const fileUrl = jsondata["file"];
-        const link = document.createElement("a");
-        link.href = fileUrl;
-        console.log(link);
-        renderDownload(fileUrl);
-        }
-        else {
-          console.log(jsondata["error"]);
-          alert(jsondata["error"]);
-        }
-      }
-    } else if (selectedFeature == "encrypt" && password) {
-      const formData = new FormData();
-      formData.append("sessionId", sessionId);
-      formData.append("password", password);
-      console.log(formData);
-      const response = await fetch("/encrypt", {
-        method: "POST",
-        body: formData,
-      });
-      const jsondata = await response.json();
-      console.log(jsondata);
-      console.log(jsondata["file"]);
-      const fileUrl = jsondata["file"];
-      const link = document.createElement("a");
-      link.href = fileUrl;
-      console.log(link);
-      renderDownload(fileUrl);
-    } else if (selectedFeature == "decrypt" && password) {
-      const formData = new FormData();
-      formData.append("sessionId", sessionId);
-      formData.append("password", password);
-      console.log(formData);
-      const response = await fetch("/decrypt", {
-        method: "POST",
-        body: formData,
-      });
-      const jsondata = await response.json();
-      console.log(jsondata);
-      if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-        const fileUrl = jsondata["file"];
-        const link = document.createElement("a");
-        link.href = fileUrl;
-        console.log(link);
-        renderDownload(fileUrl);
-      } else {
-        console.log(jsondata["error"]);
-        alert(jsondata["error"]);
-      }
-    } else if (selectedFeature == "compress" && compressOption) {
-  const formData = new FormData();
-  formData.append("sessionId", sessionId);
-  formData.append("compressOption", compressOption)
-  console.log(formData);
-  const response = await fetch("/compress", {
-    method: "POST",
-    body: formData,
-  });
-  const jsondata = await response.json();
-      console.log(jsondata);
-      if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-
-        const fileUrl = jsondata["file"];
-       const compressPercent =jsondata['compress_percent']
-        renderDownload(fileUrl,compressPercent);
-      } else {
-        console.log(jsondata["error"]);
-        alert(jsondata["error"]);
-      }
-
-    }else if (selectedFeature == "addText" && watermark  && watermarkOption) {
-  const formData = new FormData();
-  formData.append("sessionId", sessionId);
-  formData.append("watermark", watermark);
-  formData.append("watermarkOption",watermarkOption);
-  console.log(formData);
-  const response = await fetch("/watermark", {
-    method: "POST",
-    body: formData,
-  });
-  const jsondata = await response.json();
-      console.log(jsondata);
-      if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-
-        const fileUrl = jsondata["file"];
-       
-        renderDownload(fileUrl);
-      } else {
-        console.log(jsondata["error"]);
-        alert(jsondata["error"]);
-      }
-    
-    }else if (selectedFeature == "image" && imageType) {
-      if (!(imageType == "c" && imageValue == null)) {
-        const formData = new FormData();
-        formData.append("sessionId", sessionId);
-        formData.append("imageType", imageType);
-        if (imageValue) {
-          formData.append("imageValue", imageValue);
-        }
-        console.log(formData);
-        const response = await fetch("/image", {
-          method: "POST",
-          body: formData,
-        });
-        const jsondata = await response.json();
-        console.log(jsondata);
-        if (jsondata["success"]) {
-          console.log(jsondata["file"]);
-          const fileUrl = jsondata["file"];
-          renderDownload(fileUrl);
-        }
-        else {
-          console.log(jsondata["error"]);
-          alert(jsondata["error"]);
-        }
-    }
-    }else if (selectedFeature == "merge") {
-      const formData = new FormData();
-      formData.append("sessionId", sessionId);
-      console.log(formData);
-      const response = await fetch("/merge", {
-        method: "POST",
-        body: formData,
-      });
-      const jsondata = await response.json();
-      console.log(jsondata);
-      if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-        const fileUrl = jsondata["file"];
-        const link = document.createElement("a");
-        link.href = fileUrl;
-        console.log(link);
-        renderDownload(fileUrl);
-      } else {
-        console.log(jsondata["error"]);
-        alert(jsondata["error"]);
-      }
-    }
-
-});
-}
-
 let pdfFile1 = null;
 function renderDownload(link,CompressPercent=null) {
   fetch(link)
@@ -684,7 +685,7 @@ function renderDownload(link,CompressPercent=null) {
         let text=''
         data.files.forEach((file) => {
           const linkSource = `data:${file.mime_type};base64,${file.file_data}`;
-           text+=  `<a href="${linkSource}" download="${file.filename}"><button >${(file.filename.split(".")[0])}</button></a>`;
+           text+=  `<a href="${linkSource}" download="${file.filename}"><button class='downloadBtn' >${(file.filename.split(".")[0])}</button></a>`;
         
         });
         text += `<a href="/downloadsendfile/${data.directory_name}"><button >Download All</button></a>`;
@@ -723,4 +724,38 @@ function hideLoading() {
 }
 
 
-
+function submitForm(){
+const formData = new FormData();
+        if(type){
+        formData.append("Type", Type);
+        }
+        if (Value) {
+          formData.append("splitValue", Value);
+        }
+        if (password) {
+          formData.append("password", password);
+        }
+        showLoading("Processing")
+        const response = await fetch(`/${action}`, {
+          method: "POST",
+          body: formData,
+        });
+        const jsondata = await response.json();
+        hideLoading()
+        console.log(jsondata);
+        if (jsondata["success"]) {
+        console.log(jsondata["file"]);
+        const fileUrl = jsondata["file"];
+        if(jsondata["compress_percent"]){
+          const compressPercent =jsondata['compress_percent']
+          renderDownload(fileUrl,compressPercent);
+        }else{
+           renderDownload(fileUrl);
+        }
+       
+        }
+        else {
+          console.log(jsondata["error"]);
+          alert(jsondata["error"]);
+        }
+      }

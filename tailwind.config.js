@@ -6,6 +6,10 @@ module.exports = {
       fontFamily: {
         Rubik: ['Noto Sans', 'sans-serif'],
       },
+      aspectRatio:{
+        '9/16': '9/16',
+        '3/4': '3/4',
+      },
       colors: {
         transparent: 'transparent',
         black: '#000',

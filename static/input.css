@@ -4,55 +4,53 @@
 
 
 
-.material-symbols-outlined {
-  font-variation-settings:
-  'FILL' 0,
-  'wght' 400,
-  'GRAD' 0,
-  'opsz' 24
-}
+
 @layer components{
   body{
-    @apply leading-7 m-auto flex justify-center p-0 font-Rubik bg-gradient-to-br from-edgewater-100
+    @apply leading-7 m-auto  p-0 font-Rubik bg-gradient-to-br from-edgewater-100
     to-edgewater-100 via-edgewater-200 ;
   }
   .header{
-    @apply  m-2 z-10 absolute top-0 h-16 w-[calc(100%-1rem)] bg-edgewater-700 bg-opacity-60
+    @apply  m-2 z-10 sticky top-0 min-h-16 w-[calc(100%-1rem)] bg-edgewater-700 bg-opacity-60
      flex flex-row p-6 justify-between items-center backdrop-blur-lg rounded-lg shadow-md;
   }
+  .main-content{
+    @apply flex md:flex-row  flex-col;
+  }
   #main{
-    @apply mt-20 w-[calc(90%)];
+    @apply m-3 w-[calc(90%)];
   }
   .panel{
-    @apply m-2 p-4 w-[calc(50%)] bg-edgewater-50 rounded-2xl;
+    @apply m-2 p-4 md:w-1/2 w-full bg-edgewater-50 rounded-2xl  h-1/2 md:h-full ;
 
   }
   .feature-item {
-    @apply bg-edgewater-200 mb-4 p-5 rounded-md cursor-pointer transition-all  ease-linear ;
+    @apply bg-edgewater-200 border-l-4 border-edgewater-500 mb-4 p-4 rounded-md cursor-pointer
+     transition-all  ease-linear ;
   }
 
 .feature-item:hover {
-  @apply bg-edgewater-400 transform  ;
+  @apply bg-edgewater-400 -translate-y-1 border-edgewater-700  ;
   
-  transform: translateY(-2px);
+  
 }
 .feature-item.active {
-  @apply bg-edgewater-700 text-edgewater-50;
+  @apply bg-edgewater-700 text-edgewater-50 border-edgewater-300 border-l-8 py-6;
 }
 
 #dropZone {
   @apply border-dashed border-edgewater-300 border-2 rounded-3xl p-8
-   text-center mb-4 transition-all delay-150 ease-linear cursor-pointer ;
+   text-center mb-4 transition-all  ease-linear cursor-pointer ;
 }
 button {
-  @apply bg-edgewater-500 text-white border-0 p-4 rounded-full text-xl
-   cursor-pointer transition-colors delay-100 ease-in-out hover:bg-edgewater-600;
+  @apply bg-edgewater-500 text-white border-0 p-4 rounded-3xl text-xl
+   cursor-pointer transition-all ease-linear hover:bg-edgewater-600 hover:rounded-xl duration-200;
   
 }
 
 .file-item {
-  @apply bg-edgewater-200 border-l-3 border-edgewater-500 p-3 mb-2 rounded-2xl flex justify-between items-center
-  transition-all delay-150 ease-linear hover:bg-edgewater-300; 
+  @apply bg-edgewater-200 border-l-4 border-edgewater-500 p-3 mb-2 rounded-2xl flex justify-between items-center
+  transition-all delay-150 ease-linear hover:bg-edgewater-300 text-ellipsis overflow-hidden ;
 }
 
 .remove-btn {
@@ -60,19 +58,22 @@ button {
 }
 
 #uploadForm{
-  display: none;
-  border: 2px  var(--border-color);
-  border-radius: 8px;
-  padding: 2rem;
-  background-color: #008080;
-  text-align: center;
-  margin-bottom: 1rem;
-  transition: all 0.3s ease;
-  
+  @apply hidden rounded-xl h-36 p-4 bg-edgewater-600 
+   shadow-md transition-all ease-linear mb-2 text-center ;
 }
+#uploadForm:hover{
+  @apply bg-edgewater-700 ;
+}
+#UploadFile{
+  @apply h-full;
+}
+.upload-btn{
+  @apply h-4/6 w-full hover:bg-edgewater-500;
+}
+
 #dropZone:hover, #dropZone.dragover {
   @apply bg-edgewater-100
-  border-edgewater-800;
+  border-edgewater-800 ;
 }
 #dropZone p {
   @apply m-0 ;
@@ -80,9 +81,34 @@ button {
 }
   
   #selectAction{
-    @apply h-32 bg-teal-200 hidden;
+    @apply hidden rounded-xl h-36 p-4 bg-[#e0ab38] flex justify-center items-center
+    shadow-md transition-all ease-linear mb-2 text-center text-lg ;
   }
+  #removeSomeFile{
+    @apply hidden rounded-xl h-36 p-4 bg-[#e0ab38] flex justify-center items-center
+    shadow-md transition-all ease-linear mb-2 text-center text-lg
+  }
+  .processBtn{
+    @apply w-1/2 text-center;
+  }
+  .downloadBtn{
+    @apply w-1/2 text-center;
+  }
+
+
 }
+.material-symbols-outlined.md-18 { font-size: 18px; }
+        .material-symbols-outlined.md-24 { font-size: 24px; }
+        .material-symbols-outlined.md-36 { font-size: 36px; }
+        .material-symbols-outlined.md-48 { font-size: 48px; }
+.material-symbols-outlined {
+    
+    font-variation-settings:
+    'FILL' 0,
+    'wght' 300,
+    'GRAD' 0,
+    'opsz' 24
+  } 
 :root {
   --primary-color: #4a90e2;
   --secondary-color: #f5a623;
