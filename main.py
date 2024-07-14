@@ -131,20 +131,58 @@ def download_fileSendAsFile(filename):
         else:
             return jsonify({'error': file_path}), 404
 
+
+@app.route('/process/<action>',methods=['post'])
+def action(action):
+    filename=session['files'][0]
+    inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
+    if action=='image':
+        outputFileName = generate_temp_folder()
+        os.makedirs(os.path.join(app.config['TEMP_FOLDER'], outputFileName))
+    elif action=='merge':
+        filenames=session['files']
+        inputFilePath=[]
+        for filename in filenames:
+            inputFilePath.append(os.path.join(app.config['TEMP_FOLDER'], filename))
+        outputFileName = generate_temp_filename('merge.pdf')
+    else:
+        outputFileName = generate_temp_filename('split.pdf')
+    outputFilePath= os.path.join(app.config['TEMP_FOLDER'],outputFileName )
+    actions={
+        'split':split_pdf,
+        'encrypt':encrypt_pdf,
+        'decrypt':decrypt_pdf,
+        'compress':compress_pdf,
+        'addText':watermark_pdf,
+        'image':image_pdf,
+        'merge': merge_pdf
+    }
+    option = request.form.get('type')
+    value = request.form.get('value')
+    password = request.form.get('password') 
+
+    try:
+        err=actions[action](inputFile=inputFilePath,outputFile=outputFilePath,**({ 'option':option} if option else {}) ,**({ 'value':value} if value else {}) ,**({ 'password':password} if password else {}))
+        if action=='compress':
+            compress_percent=getCompressPercent(inputFilePath,outputFilePath)
+        url= f'/download/{outputFileName}'
+        return jsonify({'success': True, 'file':url,'compress_percent':compress_percent if action=='compress' else None})
+        #return jsonify({'success': False, 'error':f"{str(err)}"})
+    except:
+        return jsonify({'success': False, 'error':'err'})
 @app.route('/split',methods=['post'])
 def split():
-    #sessionId=request.form['sessionId']
     filename=session['files'][0]
     inputFilePath = os.path.join(app.config['TEMP_FOLDER'], filename)
     outputFileName = generate_temp_filename('split.pdf')
     outputFilePath= os.path.join(app.config['TEMP_FOLDER'],outputFileName )
-    splitType=request.form['splitType']
-    splitValue=None
-    if 'splitValue' in request.form:
-        splitValue=request.form['splitValue'].split(',')
+    option=request.form['type']
+    value=None
+    if 'value' in request.form:
+        value=request.form['value'].split(',')
     
     try:
-        err=split_pdf(inputFilePath,outputFilePath,splitType,splitValue)
+        err=split_pdf(inputFilePath,outputFilePath,option,value)
         
         splitUrl= f'/download/{outputFileName}'
         return jsonify({'success': True, 'file':splitUrl})
@@ -199,7 +237,8 @@ def compress():
         
         
         compressUrl= f'/download/{outputFileName}'
-        return jsonify({'success': True, 'file':compressUrl,'compress_percent':compress_percent})
+        return jsonify({'success': True, 'file':compressUrl, 'compress_percent':compress_percent if compress_percent else None})
+
         #return jsonify({'success': False, 'error':f'{str(compress_percent)}'})
     except:
         return jsonify({'success': False, 'error':'erorr compressing'})
@@ -305,10 +344,10 @@ def download_file(filename):
             return jsonify({'sucess': False, 'error': filename}), 404
 
 #need to check
-def  merge_pdf(inputFiles,outputFile):
+def  merge_pdf(inputFile,outputFile):
     output_pdf = fitz.open()
-    for inputfile in inputFiles:
-        input_pdf = fitz.open(inputfile)
+    for eachFile in inputFile:
+        input_pdf = fitz.open(eachFile)
         output_pdf.insert_pdf(input_pdf)
         input_pdf.close()
     output_pdf.save(outputFile)
@@ -316,10 +355,10 @@ def  merge_pdf(inputFiles,outputFile):
     
 
 
-def split_pdf(inputFile,outputFile,splitType,splitValue=None):
+def split_pdf(inputFile,outputFile,option,value=None):
     input_pdf=fitz.open(inputFile)
     totalPages=len(input_pdf)
-    splitPagesList=getPagesList( splitType,totalPages,splitValue)
+    splitPagesList=getPagesList( option,totalPages,value)
     output_pdf=fitz.open()
     for pageNo in splitPagesList :
         output_pdf.insert_pdf(input_pdf, from_page=pageNo, to_page=pageNo)
@@ -359,23 +398,26 @@ def getPagesList(Type,totalPages,Value=None):
     except:
         return 'pagelisterr'
 def encrypt_pdf(inputFile,outputFile,password):
-    input_pdf=fitz.open(inputFile)
-    encrypt_meth = fitz.PDF_ENCRYPT_AES_256
-    perm = int(
-        fitz.PDF_PERM_ACCESSIBILITY  
-        | fitz.PDF_PERM_PRINT 
-        | fitz.PDF_PERM_COPY  
-    )
-   
-        
-    input_pdf.save(
-            outputFile,
-            encryption=encrypt_meth, 
-            user_pw=password,  
-            permissions=perm 
-    )
-    input_pdf.close()
-
+    try:
+        input_pdf=fitz.open(inputFile)
+        encrypt_meth = fitz.PDF_ENCRYPT_AES_256
+        perm = int(
+            fitz.PDF_PERM_ACCESSIBILITY  
+            | fitz.PDF_PERM_PRINT 
+            | fitz.PDF_PERM_COPY  
+        )
+    
+            
+        input_pdf.save(
+                outputFile,
+                encryption=encrypt_meth, 
+                user_pw=password,  
+                permissions=perm 
+        )
+        input_pdf.close()
+        return 'done'
+    except:
+        return 'failed'
 
 def decrypt_pdf(inputFile,outputFile,password):
     input_pdf=fitz.open(inputFile)
@@ -386,10 +428,9 @@ def decrypt_pdf(inputFile,outputFile,password):
         else:
             return 'err'
 
-def compress_pdf(inputFile,outputFile,compressOption):
-    original_size = os.path.getsize(inputFile)
+def compress_pdf(inputFile,outputFile,value):
     input_pdf = fitz.open(inputFile)
-    if compressOption == 'l':
+    if value == 'l':
             
             params = {
                 'deflate':True,  
@@ -398,7 +439,7 @@ def compress_pdf(inputFile,outputFile,compressOption):
                 'linear':True  
 
             }
-    elif  compressOption == 'h':
+    elif  value == 'h':
         params = {
                 'deflate':True,  
                 'clean':True,  
@@ -424,23 +465,27 @@ def compress_pdf(inputFile,outputFile,compressOption):
         
         
         input_pdf.close()
-        compressed_size = os.path.getsize(outputFile)
-        compression_percent = (1 - compressed_size / original_size) * 100
-        return compression_percent
-        #return 'done'
+        
+        return 'done'
     except:
-                return compressOption
+                return 'fail'
 
-def watermark_pdf(inputFile,outputFile,watermark,pos):
+
+def getCompressPercent(inputFile,outputFile):
+    original_size = os.path.getsize(inputFile)
+    compressed_size = os.path.getsize(outputFile)
+    compression_percent = (1 - compressed_size / original_size) * 100
+    return f"{compression_percent:.2f}%"
+def watermark_pdf(inputFile,outputFile,value,option):
     input_pdf=fitz.open(inputFile)
     for i,page in enumerate(input_pdf):
-        if watermark=='<pg>':
+        if value=='<pg>':
            text=str(i+1)
         else:
-            text=watermark
+            text=value
         rect=page.rect
         fontsize=12
-        x,y=getPos(pos,rect.width,rect.height)
+        x,y=getPos(option,rect.width,rect.height)
         p=fitz.Point(x, y)
             
            
@@ -461,10 +506,11 @@ def watermark_pdf(inputFile,outputFile,watermark,pos):
     input_pdf.save(outputFile)
     input_pdf.close()   
 
-def image_pdf(inputFile,outputFile,imageType,imageValue=None):
+def image_pdf(inputFile,outputFile,option,value=None):
     input_pdf=fitz.open(inputFile)
     totalPages=len(input_pdf)
-    imagePagesList=getPagesList(imageType,totalPages,imageValue)
+    value=value.split(',')
+    imagePagesList=getPagesList(option,totalPages,value)
     
         
     for pageNo in imagePagesList :
@@ -477,13 +523,13 @@ def image_pdf(inputFile,outputFile,imageType,imageValue=None):
 
 def getPos(pos,w,h):
     if pos=='tl':
-        return w/8,h/24
+        return w/8,h/20
     elif pos=='tr':
-        return 6*w/8,h/24
+        return 7*w/8,h/20
     elif pos=='bl':
-        return w/8,23*h/24
+        return w/8,19*h/20
     elif pos=='br':
-        return 6*w/8,23*h/24
+        return 7*w/8,19*h/20
 
 
 

@@ -6,6 +6,8 @@ const fileInput = document.getElementById("fileInput");
 const fileInputBtn = document.getElementById("inputFileBtn");
 const featureList = document.getElementById("featureList");
 let noOfPages = null;
+let type=null;
+let value=null;
 let splitValue = null;
 let imageValue=null;
 let imageType ="a"
@@ -229,173 +231,33 @@ function renderProcessBtn() {
     e.preventDefault();
     //handles the submit as split
      if (selectedFeature == "split") {
-      if (!(splitType == "c" && splitValue == null)) {
-        const formData = new FormData();
-        
-        formData.append("splitType", splitType);
-        if (splitValue) {
-          formData.append("splitValue", splitValue);
-        }
-        const response = await fetch("/split", {
-          method: "POST",
-          body: formData,
-        });
-        const jsondata = await response.json();
-        console.log(jsondata);
-        if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-        const fileUrl = jsondata["file"];
-        const link = document.createElement("a");
-        link.href = fileUrl;
-        console.log(link);
-        renderDownload(fileUrl);
-        }
-        else {
-          console.log(jsondata["error"]);
-          alert(jsondata["error"]);
-        }
+      if ((type == "c" && value == null)) {
+        return
       }
-    } else if (selectedFeature == "encrypt" && password) {
-      const formData = new FormData();
-      formData.append("password", password);
-      console.log(formData);
-      const response = await fetch("/encrypt", {
-        method: "POST",
-        body: formData,
-      });
-      const jsondata = await response.json();
-      console.log(jsondata);
-      console.log(jsondata["file"]);
-      const fileUrl = jsondata["file"];
-      const link = document.createElement("a");
-      link.href = fileUrl;
-      console.log(link);
-      renderDownload(fileUrl);
-    } else if (selectedFeature == "decrypt" && password) {
-      const formData = new FormData();
-      formData.append("password", password);
-      console.log(formData);
-      const response = await fetch("/decrypt", {
-        method: "POST",
-        body: formData,
-      });
-      const jsondata = await response.json();
-      console.log(jsondata);
-      if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-        const fileUrl = jsondata["file"];
-        const link = document.createElement("a");
-        link.href = fileUrl;
-        console.log(link);
-        renderDownload(fileUrl);
-      } else {
-        console.log(jsondata["error"]);
-        alert(jsondata["error"]);
-      }
-    } else if (selectedFeature == "compress" && compressOption) {
-  const formData = new FormData();
-  formData.append("compressOption", compressOption)
-  console.log(formData);
-  const response = await fetch("/compress", {
-    method: "POST",
-    body: formData,
-  });
-  const jsondata = await response.json();
-      console.log(jsondata);
-      if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-
-        const fileUrl = jsondata["file"];
-       const compressPercent =jsondata['compress_percent']
-        renderDownload(fileUrl,compressPercent);
-      } else {
-        console.log(jsondata["error"]);
-        alert(jsondata["error"]);
-      }
-
-    }else if (selectedFeature == "addText" && watermark  && watermarkOption) {
-  const formData = new FormData();
-  formData.append("sessionId", sessionId);
-  formData.append("watermark", watermark);
-  formData.append("watermarkOption",watermarkOption);
-  console.log(formData);
-  const response = await fetch("/watermark", {
-    method: "POST",
-    body: formData,
-  });
-  const jsondata = await response.json();
-      console.log(jsondata);
-      if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-
-        const fileUrl = jsondata["file"];
-       
-        renderDownload(fileUrl);
-      } else {
-        console.log(jsondata["error"]);
-        alert(jsondata["error"]);
-      }
-    
-    }else if (selectedFeature == "image" && imageType) {
-      if (!(imageType == "c" && imageValue == null)) {
-        const formData = new FormData();
-        formData.append("imageType", imageType);
-        if (imageValue) {
-          formData.append("imageValue", imageValue);
-        }
-        console.log(formData);
-        const response = await fetch("/image", {
-          method: "POST",
-          body: formData,
-        });
-        const jsondata = await response.json();
-        console.log(jsondata);
-        if (jsondata["success"]) {
-          console.log(jsondata["file"]);
-          const fileUrl = jsondata["file"];
-          renderDownload(fileUrl);
-        }
-        else {
-          console.log(jsondata["error"]);
-          alert(jsondata["error"]);
-        }
+    } else if (selectedFeature == "encrypt" && !password) {
+      return
+    } else if (selectedFeature == "decrypt" && !password) {
+      return
+    } else if (selectedFeature == "compress" && !value) {
+    }else if (selectedFeature == "addText" && !(value  && watermarkOption)) {
+      return
+    }else if (selectedFeature == "image" && type) {
+      if ((type == "c" && value == null)) {
+        return
     }
-    }else if (selectedFeature == "merge") {
-      const formData = new FormData();
-      formData.append("sessionId", sessionId);
-      console.log(formData);
-      const response = await fetch("/merge", {
-        method: "POST",
-        body: formData,
-      });
-      const jsondata = await response.json();
-      console.log(jsondata);
-      if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-        const fileUrl = jsondata["file"];
-        const link = document.createElement("a");
-        link.href = fileUrl;
-        console.log(link);
-        renderDownload(fileUrl);
-      } else {
-        console.log(jsondata["error"]);
-        alert(jsondata["error"]);
-      }
     }
-
-
     const formData = new FormData();
           if(type){
-          formData.append("Type", Type);
+          formData.append("type", type);
           }
-          if (Value) {
-            formData.append("splitValue", Value);
+          if (value) {
+            formData.append("value", value);
           }
           if (password) {
             formData.append("password", password);
           }
           showLoading("Processing")
-          const response = await fetch(`/${action}`, {
+          const response = await fetch(`/process/${selectedFeature}`, {
             method: "POST",
             body: formData,
           });
@@ -424,11 +286,12 @@ function renderProcessBtn() {
 
 
 
-
+//render options for split
 function renderSplitOptions() {
   const PdfDetailPanel = document.getElementById("pdfDetailPanel");
 
   const splitOptionDiv = document.createElement("div");
+  //insert split related  html
   splitOptionDiv.innerHTML = `
   <div>
                   <span>Splitting Options:
@@ -450,45 +313,46 @@ function renderSplitOptions() {
 
   splitOptionSelect.addEventListener("change", function () {
     // Check if the selected option is "custom"
-    splitType = this.value;
-    console.log(splitType);
-    if (this.value === "c") {
+    type = this.value;
+    console.log(type);
+    //add pages to value if custom
+    if (type === "c") {
       splitPagesInput.style.display = "block";
       console.log("split");
       splitPagesInput.addEventListener("change", function () {
-        splitValue = this.value
+        value = this.value
           .split(",")
           .map(Number)
-          .filter((num) => !isNaN(num) && num != 0);
-        console.log(splitValue);
-
-        console.log(splitType);
+          .filter((num) => !isNaN(num) && num != 0); // Convert and filter non-numeric values
+        console.log(value);
         console.log(noOfPages);
-        for (let i = splitValue.length - 1; i >= 0; i--) {
-          const value = splitValue[i];
-          if (value > noOfPages) {
-            alert(`Page ${value} is not available`);
-            console.log("Removing:", value);
-            splitValue.splice(i, 1);
-            console.log(splitValue);
+        //check if values are valid and remove others
+        for (let i = value.length - 1; i >= 0; i--) {
+          const v = value[i];
+          if (v > noOfPages) {
+            alert(`Page ${v} is not available`);
+            console.log("Removing:",v);
+            value.splice(i, 1);
+            console.log(value);
           } else {
-            console.log("OK:", value);
+            console.log("OK:", v);
           }
-          splitPagesInput.value = splitValue;
+          splitPagesInput.value = value; //reinput the valid values back to  input
         }
       });
     } else {
-      splitValue = null;
+      value = null;
       splitPagesInput.style.display = "none";
-      console.log(splitValue);
-      console.log(splitType);
+      console.log(type);
     }
   });
 }
+//render options for encrypt
 function renderEncryptOptions() {
   const PdfDetailPanel = document.getElementById("pdfDetailPanel");
 
   const encryptOptionDiv = document.createElement("div");
+  //input html related to encrypt
   encryptOptionDiv.innerHTML = `
                   <span>Choose a Password:
                   </span>
@@ -503,8 +367,8 @@ function renderEncryptOptions() {
   const encryptPasswordreInput = document.getElementById("encryptPasswordre");
   encryptPasswordInput.addEventListener("change", function () {
     psswrd = this.value;
-    console.log(password);
   });
+  //create element to display if password doesnot match
   const passwordNotMatch = document.createElement("p");
   passwordNotMatch.style.display = "none";
   passwordNotMatch.innerHTML = "Password do not match";
@@ -522,9 +386,10 @@ function renderEncryptOptions() {
     }
   });
 }
+//render options for decrypt
 function renderDecryptOptions() {
   const PdfDetailPanel = document.getElementById("pdfDetailPanel");
-
+//create html for decrypt options
   const decryptOptionDiv = document.createElement("div");
   decryptOptionDiv.innerHTML = `
                   <span>Enter password:
@@ -539,9 +404,10 @@ function renderDecryptOptions() {
     console.log(password);
   });
 }
+//render options for compress
 function renderCompressOptions() {
   const PdfDetailPanel = document.getElementById("pdfDetailPanel");
-
+//html options for compress
   const compressOptionDiv = document.createElement("div");
   compressOptionDiv.innerHTML = `
   
@@ -561,17 +427,19 @@ function renderCompressOptions() {
   const compressOptionInput =document.getElementById("compressOption");
   console.log(compressOptionInput)
   compressOptionInput.addEventListener("change", function () {
-    compressOption = this.value;
-    console.log(compressOption);
+    value = this.value;
+    console.log(value);
   });
 
 }
+//render options for watermark
 function renderWatermarkOptions() {
   const PdfDetailPanel = document.getElementById("pdfDetailPanel");
+  //create html for watermark options
   const watermarkOptionDiv = document.createElement("div");
   watermarkOptionDiv.innerHTML = `<span>Enter water mark text
                   </span><br>
-                  <span>Page No</span><input type="radio" id="watermarkPageNo" value="<pg>">
+                  <span>Page No</span><input type="checkbox" id="watermarkPageNo" value="<pg>">
                   <input type="text" id="watermarkText" placeholder="water mark text"><br>
                   <select id="watermarkOption">
                   <option value="tr"> top right</option>
@@ -584,32 +452,32 @@ function renderWatermarkOptions() {
   PdfDetailPanel.appendChild(watermarkOptionDiv);
   const watermarkText = document.getElementById("watermarkText");
   watermarkText.addEventListener("change", function () {
-    watermark = this.value;
-    console.log(watermark);
+    value = this.value;  //sets the text to input in header or footer
+    console.log(value);
   });
   const watermarkOptionSelect = document.getElementById("watermarkOption");
   watermarkOptionSelect.addEventListener("change", function () {
-    watermarkOption = this.value;
-    console.log(watermarkOption);
+    type = this.value; //set the position of text 
+    console.log(type);
   });
   const watermarkPageNo = document.getElementById("watermarkPageNo");
   watermarkPageNo.addEventListener("change", function () {
     if (this.checked) {
-      watermark = "<pg>";
+      value = "<pg>";  //set value to page no if pageno is choosen
       watermarkText.style.display = "none";
     } else {
-      watermark = null;
+      value = null;
       watermarkText.style.display = "block";
     
     }
     
-    console.log(watermark)
-    console.log(watermarkOption);
+  
   });
 }
+//render options for convert to image
 function renderImageOptions() {
   const PdfDetailPanel = document.getElementById("pdfDetailPanel");
-
+//html for image options
   const imageOptionDiv = document.createElement("div");
   imageOptionDiv.innerHTML = `
   <div>
@@ -633,42 +501,40 @@ function renderImageOptions() {
 
   imageOptionSelect.addEventListener("change", function () {
     // Check if the selected option is "custom"
-    imageType = this.value;
-    console.log(imageType);
-    if (this.value === "c") {
+    type = this.value;
+    console.log(type);
+    if (this.value === "c") {  //if value is custom then show input
       imagePagesInput.style.display = "block";
       console.log("image");
       imagePagesInput.addEventListener("change", function () {
-        imageValue = this.value
-          .image(",")
+        value = this.value
+          .split(",")
           .map(Number)
           .filter((num) => !isNaN(num) && num != 0);
-        console.log(imageValue);
+        console.log(value);
 
-        console.log(imageType);
+        console.log(type);
         console.log(noOfPages);
-        for (let i = imageValue.length - 1; i >= 0; i--) {
-          const value = imageValue[i];
-          if (value > noOfPages) {
-            alert(`Page ${value} is not available`);
-            console.log("Removing:", value);
-            imageValue.splice(i, 1);
-            console.log(imageValue);
+        for (let i = value.length - 1; i >= 0; i--) {  //removes invalid values and update imput
+          const v = value[i];
+          if (v > noOfPages) {
+            alert(`Page ${v} is not available`);
+            console.log("Removing:", v);
+            value.splice(i, 1);
+            console.log(value);
           } else {
             console.log("OK:", value);
           }
-          imagePagesInput.value = imageValue;
+          imagePagesInput.value = value;
         }
       });
     } else {
-      imageValue = null;
-      imagePagesInput.style.display = "none";
-      console.log(imageValue);
-      console.log(imageType);
+      value = null;
+      imagePagesInput.style.display = "none"; //hide value input
     }
   });
 }
-
+//checked until here
 let pdfFile1 = null;
 function renderDownload(link,CompressPercent=null) {
   fetch(link)
@@ -723,39 +589,3 @@ function hideLoading() {
   document.body.style.overflow = 'auto'; // Re-enable scrolling
 }
 
-
-function submitForm(){
-const formData = new FormData();
-        if(type){
-        formData.append("Type", Type);
-        }
-        if (Value) {
-          formData.append("splitValue", Value);
-        }
-        if (password) {
-          formData.append("password", password);
-        }
-        showLoading("Processing")
-        const response = await fetch(`/${action}`, {
-          method: "POST",
-          body: formData,
-        });
-        const jsondata = await response.json();
-        hideLoading()
-        console.log(jsondata);
-        if (jsondata["success"]) {
-        console.log(jsondata["file"]);
-        const fileUrl = jsondata["file"];
-        if(jsondata["compress_percent"]){
-          const compressPercent =jsondata['compress_percent']
-          renderDownload(fileUrl,compressPercent);
-        }else{
-           renderDownload(fileUrl);
-        }
-       
-        }
-        else {
-          console.log(jsondata["error"]);
-          alert(jsondata["error"]);
-        }
-      }
