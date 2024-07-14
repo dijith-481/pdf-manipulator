@@ -248,19 +248,21 @@ def split_pdf(inputFile,outputFile,option,value=None):
         option: The option for splitting the PDF file.
         value: The value for the splitting option.
     """
-    input_pdf=fitz.open(inputFile) # Open the input PDF file
-    totalPages=len(input_pdf) # Get the total number of pages in the input PDF file
-    splitPagesList=getPagesList( option,totalPages,value) # Get the list of pages to split
-    output_pdf=fitz.open() # Create a new PDF object to store the split pages
-    for pageNo in splitPagesList : # Iterate over the list of pages to split
-        output_pdf.insert_pdf(input_pdf, from_page=pageNo, to_page=pageNo) # Insert the page into the output PDF file
+    
     try:
+        input_pdf=fitz.open(inputFile) # Open the input PDF file
+        totalPages=len(input_pdf) # Get the total number of pages in the input PDF file
+        splitPagesList=getPagesList( option,totalPages,value) # Get the list of pages to split
+        output_pdf=fitz.open() # Create a new PDF object to store the split pages
+        for pageNo in splitPagesList : # Iterate over the list of pages to split
+            output_pdf.insert_pdf(input_pdf, from_page=pageNo, to_page=pageNo) # Insert the page into the output PDF file
+    
         output_pdf.save(outputFile) # Save the output PDF file
         input_pdf.close() # Close the input PDF file
         output_pdf.close() # Close the output PDF file
         return 'done' # Return 'done' if the splitting was successful
     except:
-        return 'failed splitting' # Return 'failed splitting' if the splitting failed
+        return 'failed'  # Return 'failed splitting' if the splitting failed
 def getPagesList(Type,totalPages,Value=None):
     """
     Generates a list of page numbers based on the given type and total pages.
@@ -347,6 +349,7 @@ def encrypt_pdf(inputFile,outputFile,password):
     except:
         # Return an error message if encryption fails
         return 'error encrypting'
+
 def decrypt_pdf(inputFile,outputFile,password):
     """
     Decrypts a PDF file.
@@ -414,7 +417,7 @@ def compress_pdf(inputFile,outputFile,value):
                 'ascii':False  # Disable ASCII encoding
 
             }
-    else:
+    elif  value == 'm':
         params = {
                 'deflate':True,  # Use deflate compression
                 'clean':True,  # Clean the PDF file
