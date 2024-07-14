@@ -4,9 +4,9 @@
 
 # App
 gunicorn
-Flask==2.1.0
-Flask-Session==0.4.0
-Werkzeug==2.0.3
-PyMuPDF==1.19.6
-Flask-APScheduler==1.12.3
-python-dotenv==0.19.2
+Flask
+Flask-Session
+Werkzeug
+PyMuPDF
+Flask-APScheduler
+python-dotenv
