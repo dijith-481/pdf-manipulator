@@ -195,6 +195,8 @@ uploadForm.addEventListener("submit", async (e) => {
 //render the file in pdf panel 
 function renderPdf(pdfUrl) {
   const pdfPanel = document.getElementById("pdfPanel");
+  pdfPanel.classList.add("hidden");
+  pdfPanel.classList.add("sm:block");
   pdfPanel.innerHTML = `<iframe src=${pdfUrl}  class="w-full aspect-3/4"  style="border:none;"></iframe>`;
 }
 //renders pdf details
@@ -265,16 +267,20 @@ function renderProcessBtn() {
           hideLoading()
           console.log(jsondata);
           if (jsondata["success"]) {
+            if (jsondata['url']!=null){
+              console.log(jsondata['url']) 
+              const compressPercent =jsondata['compress_percent']
+          renderDownload(jsondata['url'],compressPercent)
+            }
+            else{
           console.log(jsondata["file"]);
-          const fileUrl = jsondata["file"];
-          if(jsondata["compress_percent"]){
-            const compressPercent =jsondata['compress_percent']
-            renderDownload(fileUrl,compressPercent);
-          }else{
-             renderDownload(fileUrl);
-          }
+          
+          const file = jsondata["file"];
+          
+             renderDownload1(file);
+          
          
-          }
+          }}
           else {
             console.log(jsondata["error"]);
             alert(jsondata["error"]);
@@ -537,44 +543,13 @@ function renderImageOptions() {
 //checked until here
 let pdfFile1 = null;
 function renderDownload(link,CompressPercent=null) {
-  fetch(link)
-    .then((response) => {
-      //if (!response.ok) {
-      //  throw new Error();
-      //}
-      return response.json();
-    })
-    .then((data) => {
-      if (data.error !=null){console.log(data.error)}
-      else if (data.files !=null){
-        
-        let text=''
-        data.files.forEach((file) => {
-          const linkSource = `data:${file.mime_type};base64,${file.file_data}`;
-           text+=  `<a href="${linkSource}" download="${file.filename}"><button class='downloadBtn' >${(file.filename.split(".")[0])}</button></a>`;
-        
-        });
-        text += `<a href="/downloadsendfile/${data.directory_name}"><button >Download All</button></a>`;
-        pdfDetailPanel.innerHTML=text
-      }
-      else{
-        const linkSource = `data:${data.mime_type};base64,${data.file_data}`;
-        pdfFile1 = linkSource;
-        renderPdf(pdfFile1);
-        let text = `<a href="${linkSource}" download="${data.filename}"><button >Download File</button></a>`;
-        if (CompressPercent!=null) {
-            text+=`<br><p>compressed percentage:${CompressPercent}%</p>`
-        }
-        pdfDetailPanel.innerHTML=text
-        console.log("appended");
-        console.log(linkSource);
-        return pdfFile1;
-        
-}});
-    /*.catch((error) => {
-      console.error("Download failed:", error);
-      alert("Failed to download the file. Please try again.");
-    });*/
+  const pdfDetailPanel = document.getElementById("pdfDetailPanel");
+  const linkSource = link;
+  linkpanel=`<h2>Download File</h2>
+  <p>Your file is ready to be downloaded</p>
+  <a href="${linkSource}" download="pdf"><button class='downloadBtn' >Download</button></a>`
+  pdfDetailPanel.innerHTML=linkpanel
+  console.log(linkSource);
 }
 function showLoading(message = "Processing...") {
   console.log('loading')
@@ -589,3 +564,34 @@ function hideLoading() {
   document.body.style.overflow = 'auto'; // Re-enable scrolling
 }
 
+function renderDownload1(fileJson,compressPercent=null){
+files=null;
+
+  if (fileJson['files'] !=null){
+    
+    files=fileJson['files']
+    let text=`<h2>Download File</h2>
+    <p>Your file is ready to be downloaded</p>`
+    files.forEach((file) => {
+      const linkSource = `data:${file['mime_type']};base64,${file['file_data']}`;
+       text+=  `<a href="${linkSource}" download="${file['filename']}"><button class='downloadBtn' >${(file['filename'].split(".")[0])}</button></a>`;
+    
+    });
+    text += `<a href="/downloadsendfile/${fileJson['directory_name']}"><button >Download All</button></a>`;
+    pdfDetailPanel.innerHTML=text
+  }
+  else{
+    const linkSource = `data:${fileJson['mime_type']};base64,${fileJson['file_data']}`;
+    pdfFile1 = linkSource;
+    renderPdf(pdfFile1);
+    let text = `<h2>Download File</h2>
+    <p>Your file is ready to be downloaded</p><a href="${linkSource}" download="${fileJson['filename']}"><button >Download File</button></a>`;
+    if (compressPercent!=null) {
+        text+=`<br><p>compressed percentage:${compressPercent}%</p>`
+    }
+    pdfDetailPanel.innerHTML=text
+    console.log("appended");
+    console.log(linkSource);
+    return pdfFile1;
+    
+}}

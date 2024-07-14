@@ -7,7 +7,7 @@
 
 @layer components{
   body{
-    @apply leading-7 m-auto  p-0 font-Rubik bg-gradient-to-br from-edgewater-100
+    @apply leading-7 m-auto h-screen w-screen  p-0 font-Rubik bg-gradient-to-br from-edgewater-100
     to-edgewater-100 via-edgewater-200 ;
   }
   .header{
