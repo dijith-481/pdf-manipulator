@@ -1,5 +1,4 @@
 import os
-import gunicorn 
 import uuid
 from flask import Flask, send_file,request,render_template,jsonify,session
 from flask_session import Session
@@ -619,7 +618,7 @@ def job1():
 
 def main():
     
-    app.run()
+    app.run(host='0.0.0.0')
    
     
     
