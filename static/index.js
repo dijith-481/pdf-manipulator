@@ -69,9 +69,15 @@ function updateFileList() {
 //checks and show relevent containers during upload
 function showMessage(){
   if (!selectedFeature) { //check if any action is selected
+    if (files.length>0){
     showChooseAction(); //show choose an action cotainer
     hideDropZone(); //hide the drop zone container
+    } else{
+      hidechooseAction();
+      showDropZone();
+    }
   } else {
+    showDropZone();
     hidechooseAction(); //hide the choose action container
     if(selectedFeature=='merge') {  //handles if action is merge
       showDropZone();
@@ -168,8 +174,9 @@ uploadForm.addEventListener("submit", async (e) => {
     console.log(jsondata["details"]);
     if (jsondata["success"]) {
       const pdfFile = URL.createObjectURL(files[0]);
+      console.log(jsondata['pageNo'])
       renderPdf(pdfFile); //render the uploaded file in pdf panel
-      renderPdfDetails(files[0].name, jsondata["details"][0]); //render pdf details
+      renderPdfDetails(files[0].name, jsondata["pageNo"]); //render pdf details
       //render options based on action
       if (selectedFeature == "split") {
         renderSplitOptions();
@@ -200,21 +207,10 @@ function renderPdf(pdfUrl) {
   pdfPanel.innerHTML = `<iframe src=${pdfUrl}  class="w-full aspect-3/4"  style="border:none;"></iframe>`;
 }
 //renders pdf details
-function renderPdfDetails(name, details) {
+function renderPdfDetails(name, pageNo) {
   const pdfDetailPanel = document.getElementById("pdfDetailPanel");
-  const pdfDetailkeys = ["Page Count", "Author", "Subject"];
-  if (!details) {
-    pdfDetailPanel.innerHTML = "";
-  } else {
-    noOfPages = details[0];//get total number of pages
-    let pdfDetailHtml = `<h2 class="text-ellispses overflow-hidden">${name}</h2>`;
-    details.forEach((detail, index) => {
-      if (detail) {
-        pdfDetailHtml += `<p>${pdfDetailkeys[index]}: ${detail}</p>`;
-      }
-    });
+    let pdfDetailHtml = `<h2 class="text-ellispses overflow-hidden">${name}</h2><p>Total Pages: ${pageNo}</p>`;
     pdfDetailPanel.innerHTML = pdfDetailHtml;
-  }
 }
 //renders button to submit  action and options
 function renderProcessBtn() {
@@ -309,14 +305,14 @@ function renderSplitOptions() {
                     <option value="e">Even Pages</option>
                     <option value="c">Custom</option>
                 </select>
-                <input type="text" id="splitPagesCustom" placeholder="1,2,3" style="display: none;"> 
+                <input type="text" id="splitPagesCustom" class='inputPsswd' placeholder="1,2,3" style="display: none;"> 
 </div>
 `;
 
   PdfDetailPanel.appendChild(splitOptionDiv);
   const splitOptionSelect = document.getElementById("splitOption");
   const splitPagesInput = document.getElementById("splitPagesCustom");
-
+  type='m';
   splitOptionSelect.addEventListener("change", function () {
     // Check if the selected option is "custom"
     type = this.value;
@@ -360,13 +356,13 @@ function renderEncryptOptions() {
   const encryptOptionDiv = document.createElement("div");
   //input html related to encrypt
   encryptOptionDiv.innerHTML = `
-                  <span>Choose a Password:
-                  </span>
-                <input type="password" id="encryptPassword" placeholder="use strong password" ">
-                <span>Re-enter Password:
-                  </span>
-                <input type="password" id="encryptPasswordre" placeholder="use strong password" "> 
-`;
+                  <label>Choose a Password:
+                  </label>
+                <input class='inputPsswd' type="password" id="encryptPassword" placeholder="use strong password" "><br>
+                <label>Re-enter Password:
+                  </label>
+                <input type="password" class='inputPsswd' id="encryptPasswordre" placeholder="use strong password" "> 
+                `;
   PdfDetailPanel.appendChild(encryptOptionDiv);
   let psswrd;
   const encryptPasswordInput = document.getElementById("encryptPassword");
@@ -400,7 +396,7 @@ function renderDecryptOptions() {
   decryptOptionDiv.innerHTML = `
                   <span>Enter password:
                   </span>
-                <input type="password" id="decryptPassword" placeholder="password" ">
+                <input type="password" class='inputPsswd' id="decryptPassword" placeholder="password" ">
                  
 `;
   PdfDetailPanel.appendChild(decryptOptionDiv);
@@ -432,6 +428,7 @@ function renderCompressOptions() {
   PdfDetailPanel.appendChild(compressOptionDiv);
   const compressOptionInput =document.getElementById("compressOption");
   console.log(compressOptionInput)
+  value='l'
   compressOptionInput.addEventListener("change", function () {
     value = this.value;
     console.log(value);
@@ -446,7 +443,7 @@ function renderWatermarkOptions() {
   watermarkOptionDiv.innerHTML = `<span>Enter water mark text
                   </span><br>
                   <span>Page No</span><input type="checkbox" id="watermarkPageNo" value="<pg>">
-                  <input type="text" id="watermarkText" placeholder="water mark text"><br>
+                  <input type="text" id="watermarkText" class='inputPsswd' placeholder="water mark text"><br>
                   <select id="watermarkOption">
                   <option value="tr"> top right</option>
                   <option value="tl"> top left</option>
@@ -457,6 +454,7 @@ function renderWatermarkOptions() {
                `
   PdfDetailPanel.appendChild(watermarkOptionDiv);
   const watermarkText = document.getElementById("watermarkText");
+  value='tr'
   watermarkText.addEventListener("change", function () {
     value = this.value;  //sets the text to input in header or footer
     console.log(value);
@@ -497,14 +495,14 @@ function renderImageOptions() {
                     <option value="e">Even Pages</option>
                     <option value="c">Custom</option>
                 </select>
-                <input type="text" id="imagePagesCustom" placeholder="1,2,3" style="display: none;"> 
+                <input type="text" class='inputPsswd' id="imagePagesCustom" placeholder="1,2,3" style="display: none;"> 
 </div>
 `;
 
   PdfDetailPanel.appendChild(imageOptionDiv);
   const imageOptionSelect = document.getElementById("imageOption");
   const imagePagesInput = document.getElementById("imagePagesCustom");
-
+type='a'
   imageOptionSelect.addEventListener("change", function () {
     // Check if the selected option is "custom"
     type = this.value;
@@ -541,13 +539,16 @@ function renderImageOptions() {
   });
 }
 //checked until here
-let pdfFile1 = null;
-function renderDownload(link,CompressPercent=null) {
+let pdfFile = null;
+function renderDownload(link,compressPercent=null) {
   const pdfDetailPanel = document.getElementById("pdfDetailPanel");
   const linkSource = link;
   linkpanel=`<h2>Download File</h2>
   <p>Your file is ready to be downloaded</p>
-  <a href="${linkSource}" download="pdf"><button class='downloadBtn' >Download</button></a>`
+  <a href="${linkSource}" download="pdf"><button class='downloadBtn flex items-center justify-center' ><span class="material-symbols-outlined md-48 ">
+  download
+  </span>Download</button></a>
+  <p>compress percent: ${compressPercent}`
   pdfDetailPanel.innerHTML=linkpanel
   console.log(linkSource);
 }
@@ -574,24 +575,30 @@ files=null;
     <p>Your file is ready to be downloaded</p>`
     files.forEach((file) => {
       const linkSource = `data:${file['mime_type']};base64,${file['file_data']}`;
-       text+=  `<a href="${linkSource}" download="${file['filename']}"><button class='downloadBtn' >${(file['filename'].split(".")[0])}</button></a>`;
+       text+=  `<a href="${linkSource}" download="${file['filename']}"><button class='downloadBtn  text-sm bg-edgewater-400 p-2  flex items-center justify-center' ><span class="material-symbols-outlined md-24 ">
+       download
+       </span>${(file['filename'].split(".")[0])}</button></a>`;
     
     });
-    text += `<a href="/downloadsendfile/${fileJson['directory_name']}"><button >Download All</button></a>`;
+    text += `<a href="/downloadsendfile/${fileJson['directory_name']}"><button class="flex items-center justify-center"><span class="material-symbols-outlined md-48 ">
+    download
+    </span>Download All</button></a>`;
     pdfDetailPanel.innerHTML=text
   }
   else{
     const linkSource = `data:${fileJson['mime_type']};base64,${fileJson['file_data']}`;
-    pdfFile1 = linkSource;
-    renderPdf(pdfFile1);
+    pdfFile = linkSource;
+    renderPdf(pdfFile);
     let text = `<h2>Download File</h2>
-    <p>Your file is ready to be downloaded</p><a href="${linkSource}" download="${fileJson['filename']}"><button >Download File</button></a>`;
+    <p>Your file is ready to be downloaded</p><a href="${linkSource}" download="${fileJson['filename']}"><button class="flex items-center justify-center" ><span class="material-symbols-outlined md-48 ">
+    download
+    </span>Download File</button></a>`;
     if (compressPercent!=null) {
         text+=`<br><p>compressed percentage:${compressPercent}%</p>`
     }
     pdfDetailPanel.innerHTML=text
     console.log("appended");
     console.log(linkSource);
-    return pdfFile1;
+    return;
     
 }}

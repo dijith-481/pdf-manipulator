@@ -41,7 +41,6 @@ def index():
 def upload():
     try:
         uploaded_files = []   
-        fileDetails = [] 
         for file_key in request.files:
             if file_key not in request.files:
                 return jsonify({'success': False, 'error':f'no {file_key}part'})
@@ -57,7 +56,7 @@ def upload():
 
                 uploaded_files.append(temp_filename)
                 try:
-                    fileDetails.append(pdfDetails(file))
+                    pages=pdfDetails(temp_filepath)
                 except:
                     None
             except:
@@ -65,7 +64,7 @@ def upload():
         
         store_session_data(uploaded_files) #stores session data
         
-        return jsonify({'success': True,  'details':fileDetails}) #retrurns details of pdf
+        return jsonify({'success': True,  'pageNo':pages}) #retrurns details of pdf
     except:
         return jsonify({'success': False, 'error':'error while recieving file'})
 
@@ -557,26 +556,38 @@ def cleanup_temp_files():
                 shutil.rmtree(file_path)
 
 def store_session_data( filenames):
-    #session['id']= uuid
+    """
+    Stores the filenames in the session.
+    """
     session['files']=[]
     for filename in (filenames):
         session['files'].append(filename)
 
 def pdfDetails(pdf):
-    pdf_reader=PdfReader(pdf)
-    meta=pdf_reader.metadata
-    No_of_pages=len(pdf_reader.pages)
-    author=meta.author
-    subject=meta.subject
-    return (No_of_pages,author,subject)
+    """
+    Returns the number of pages, author, and subject of a PDF file.
+    """
+    doc = fitz.open(pdf)
+       
+        
+    page_count = len(doc)
+    doc.close()
+    return page_count
 
 def get_mime_type(filename):
+    """
+    Returns the MIME type of a file based on its extension.
+    """
+    mimetypes.init()
     mime_type, _ = mimetypes.guess_type(filename)
     return mime_type or 'application/octet-stream'
 
 
 
 def zip_directory(directory):
+    """
+    Creates a ZIP file from a directory.
+    """
     zip_filename =generate_temp_filename('zip.zip')
     zip_filepath = os.path.join(app.config['TEMP_FOLDER'], zip_filename)
 
@@ -596,7 +607,7 @@ def zip_directory(directory):
         return 'faeli'
 
 
-@scheduler.task('interval', id='do_job_1', seconds=3600, misfire_grace_time=900)
+@scheduler.task('interval', id='do_job_1', seconds=900, misfire_grace_time=300)
 def job1():
     cleanup_temp_files()  # Call the cleanup function
 
