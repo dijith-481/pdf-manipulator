@@ -40,7 +40,7 @@ fileInput.addEventListener("change", (e) => handleFiles(e.target.files));
 //handles the gives file
 function handleFiles(newFiles) {
   for (let file of newFiles) {
-    if (file.type === "application/pdf") {
+          if (file.type === "application/pdf" && file.size < 30 * 1024 * 1024) {
       
       files.push(file); //add file to files array
       console.log(file);
