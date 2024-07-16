@@ -1,6 +1,12 @@
 # Dev environment
-pip
-autopep8
+#pip
+#autopep8
 
 # App
-flask
+gunicorn
+Flask
+Flask-Session
+Werkzeug
+PyMuPDF
+Flask-APScheduler
+python-dotenv

@@ -618,7 +618,7 @@ def job1():
 
 def main():
     
-    app.run(port=int(os.environ.get('PORT', 80)))
+    app.run(host='0.0.0.0')
    
     
     
