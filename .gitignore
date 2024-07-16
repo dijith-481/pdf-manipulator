@@ -8,4 +8,5 @@ flask_session
 .vscode
 test1.pdf
 test.py
-static/output.css
+
+.pytest_cache
