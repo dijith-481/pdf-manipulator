@@ -6,7 +6,6 @@ node_modules
 temp
 flask_session
 .vscode
-test1.pdf
-test.py
+
 
 .pytest_cache
