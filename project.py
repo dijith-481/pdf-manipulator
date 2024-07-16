@@ -146,13 +146,16 @@ def action(action):
     password = request.form.get('password')     #recieve if available
 
     try:
-        err=actions[action](inputFile=inputFilePath,outputFile=outputFilePath,**({ 'option':option} if option else {}) ,**({ 'value':value} if value else {}) ,**({ 'password':password} if password else {}))  #call function
+        err=actions[action](inputFile=inputFilePath,outputFile=outputFilePath,**({ 'option':option} if option else {}) ,**({ 'value':value} if value else {}) ,**({ 'password':password} if password else {})) 
+         #call function
+        if err['success']==False:
+            return jsonify({'success': False, 'error':err['error']})
         if action=='compress':
             compress_percent=getCompressPercent(inputFilePath,outputFilePath) #handles special case of action
             url='/downloadsendfile/'+outputFileName
             return jsonify({'success': True, 'url':url,'compress_percent':compress_percent})
         else:
-            sendingFile=download_file(outputFileName) #function to send file as embedded
+            sendingFile=download_file(outputFileName,action) #function to send file as embedded
             return jsonify({'success': True, 'file':sendingFile,'compress_percent':compress_percent if action=='compress' else None})
     except:
         return jsonify({'success': False, 'error':'error while processing'})
@@ -161,7 +164,7 @@ def action(action):
 
 #@app.route('/download/<filename>', methods=['get'])
 #handles the sending of file as embedded
-def download_file(filename):
+def download_file(filename,action):
 
     if os.path.isdir(os.path.join(app.config['TEMP_FOLDER'], filename)):  #handles if directory
         directory_path = os.path.join(app.config['TEMP_FOLDER'], filename)
@@ -193,7 +196,7 @@ def download_file(filename):
             try:
                 return {
                     'success': True,
-                    'directory_name': filename,
+                    'directory_name': f"{action}",
                     'files': files_data
                 }
             except:
@@ -208,7 +211,7 @@ def download_file(filename):
             encoded_data = base64.b64encode(file_data).decode('utf-8')
             return {
                 'success': True,
-                'filename': filename,
+                'filename': f"{action}.pdf",
                 'file_data': encoded_data,
                 'mime_type': get_mime_type(filename)  # Adjust based on your file type
             } 
@@ -233,9 +236,10 @@ def  merge_pdf(inputFile,outputFile):
             input_pdf.close()  # Close the input PDF file
         output_pdf.save(outputFile)  # Save the merged PDF to the specified output file
         output_pdf.close()  # Close the output PDF object
-        return 'merging done'
+        return {'success': True ,'message' : 'done'}
+
     except:
-        return 'failed merging'
+        return {'success': False, 'error': 'Fail Merging'}
 
 
 def split_pdf(inputFile,outputFile,option,value=None):
@@ -260,9 +264,9 @@ def split_pdf(inputFile,outputFile,option,value=None):
         output_pdf.save(outputFile) # Save the output PDF file
         input_pdf.close() # Close the input PDF file
         output_pdf.close() # Close the output PDF file
-        return 'done' # Return 'done' if the splitting was successful
+        return {'success': True ,'message' : 'done'} # Return 'done' if the splitting was successful
     except:
-        return 'failed'  # Return 'failed splitting' if the splitting failed
+        return {'success': False, 'error': 'Failed splitting'} # Return 'failed splitting' if the splitting failed
 def getPagesList(Type,totalPages,Value=None):
     """
     Generates a list of page numbers based on the given type and total pages.
@@ -344,11 +348,11 @@ def encrypt_pdf(inputFile,outputFile,password):
         input_pdf.close()
         
         # Return a success message
-        return 'file is encrypted'
+        return {'success': True ,'message' : 'done'}
     
     except:
         # Return an error message if encryption fails
-        return 'error encrypting'
+        return {'success': False, 'error': 'Fail Encrypting'}
 
 def decrypt_pdf(inputFile,outputFile,password):
     """
@@ -377,12 +381,12 @@ def decrypt_pdf(inputFile,outputFile,password):
 
             else:
                 # Return an error message if the password doesn't match
-                return 'passwords doesnt match'
+                return {'success': False, 'error': 'Password Mismatched'}
         # Return a success message if the file is not encrypted
-        return 'file is decrypted'
+        return {'success': True ,'message' : 'done'}
     except:
         # Return an error message if decryption fails
-        return 'failed decrypting'
+        return {'success': False, 'error': 'Fail Decrypting'}
 def compress_pdf(inputFile,outputFile,value):
     """
     Compresses a PDF file.
@@ -435,9 +439,9 @@ def compress_pdf(inputFile,outputFile,value):
         
         input_pdf.close()  # Close the input PDF file
         
-        return 'file is compressed'  # Return success message
+        return {'success': True ,'message' : 'done'}  # Return success message
     except:
-        return 'error compressing'  # Return error message
+         return {'success': False, 'error': 'compression Failed'}  # Return error message
 def getCompressPercent(inputFile,outputFile):
     """
     Calculates the compression percentage between two files.
@@ -488,9 +492,9 @@ def watermark_pdf(inputFile,outputFile,value,option):
             )
         input_pdf.save(outputFile)  # Save the watermarked PDF
         input_pdf.close()   
-        return 'added data to pdf'  # Indicate success
+        return {'success': True ,'message' : 'done'}  # Indicate success
     except:
-        return 'some error occured'  # Indicate an error occurred
+        return {'success': False, 'error': 'Fail adding text'}  # Indicate an error occurred
 
 def image_pdf(inputFile,outputFile,option,value=None):
     """
@@ -521,9 +525,9 @@ def image_pdf(inputFile,outputFile,option,value=None):
             pix.save(f"{outputFile}/page {pageNo+1}.png")  # Save the pixmap as an image
                 
         input_pdf.close()  # Close the PDF file
-        return 'converted to images'  # Return success message
+        return {'success': True ,'message' : 'done'}  # Return success message
     except:
-        return 'error converting'  # Return error message
+       return {'success': False, 'error': 'Fail converting'}  # Return error message
 def getPos(pos,w,h):
     """
     Calculates the position coordinates based on the given position string and dimensions.
@@ -623,5 +627,3 @@ def main():
     
     
 
-if __name__ == "__main__":
-    main()

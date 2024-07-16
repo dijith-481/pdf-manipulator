@@ -44,7 +44,7 @@
 }
 button {
   @apply bg-edgewater-500 text-white border-0 p-4 rounded-3xl text-xl mt-4
-   cursor-pointer transition-all ease-linear hover:bg-edgewater-600 hover:rounded-xl duration-200;
+   cursor-pointer transition-all ease-linear hover:bg-edgewater-600 hover:rounded-xl duration-200 disabled:bg-edgewater-950 disabled:cursor-not-allowed disabled:opacity-10;
   
 }
 
@@ -89,7 +89,7 @@ button {
     shadow-md transition-all ease-linear mb-2 text-center text-lg
   }
   .processBtn{
-    @apply w-1/2 text-center;
+    @apply w-1/2 text-center ;
   }
   .downloadBtn{
     @apply w-1/2 text-center;

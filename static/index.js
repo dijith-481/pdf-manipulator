@@ -175,6 +175,7 @@ uploadForm.addEventListener("submit", async (e) => {
     if (jsondata["success"]) {
       const pdfFile = URL.createObjectURL(files[0]);
       console.log(jsondata['pageNo'])
+      noOfPages=jsondata['pageNo']
       renderPdf(pdfFile); //render the uploaded file in pdf panel
       renderPdfDetails(files[0].name, jsondata["pageNo"]); //render pdf details
       //render options based on action
@@ -220,6 +221,11 @@ function renderProcessBtn() {
   form.enctype = "multipart/form-data";
   const button = document.createElement("button");
   button.className = "process-btn";
+  if (selectedFeature =='encrypt'||selectedFeature=='decrypt'){
+   button.disabled=true; 
+  }
+  
+
   button.textContent = selectedFeature;
   form.appendChild(button);
   pdfDetailPanel.appendChild(form);
@@ -227,23 +233,7 @@ function renderProcessBtn() {
   const processFile = document.getElementById("processBtn");
   processFile.addEventListener("submit", async (e) => {
     e.preventDefault();
-    //handles the submit as split
-     if (selectedFeature == "split") {
-      if ((type == "c" && value == null)) {
-        return
-      }
-    } else if (selectedFeature == "encrypt" && !password) {
-      return
-    } else if (selectedFeature == "decrypt" && !password) {
-      return
-    } else if (selectedFeature == "compress" && !value) {
-    }else if (selectedFeature == "addText" && !(value  && watermarkOption)) {
-      return
-    }else if (selectedFeature == "image" && type) {
-      if ((type == "c" && value == null)) {
-        return
-    }
-    }
+    
     const formData = new FormData();
           if(type){
           formData.append("type", type);
@@ -254,13 +244,14 @@ function renderProcessBtn() {
           if (password) {
             formData.append("password", password);
           }
-          showLoading("Processing")
+          showLoading("Processing");
           const response = await fetch(`/process/${selectedFeature}`, {
             method: "POST",
             body: formData,
           });
+          showLoading("waiting for response")
           const jsondata = await response.json();
-          hideLoading()
+          hideLoading();
           console.log(jsondata);
           if (jsondata["success"]) {
             if (jsondata['url']!=null){
@@ -320,6 +311,7 @@ function renderSplitOptions() {
     //add pages to value if custom
     if (type === "c") {
       splitPagesInput.style.display = "block";
+      document.getElementsByClassName("process-btn")[0].disabled=true;
       console.log("split");
       splitPagesInput.addEventListener("change", function () {
         value = this.value
@@ -332,7 +324,7 @@ function renderSplitOptions() {
         for (let i = value.length - 1; i >= 0; i--) {
           const v = value[i];
           if (v > noOfPages) {
-            alert(`Page ${v} is not available`);
+            alert(`Page ${v} is not available ${noOfPages} is the last page`);
             console.log("Removing:",v);
             value.splice(i, 1);
             console.log(value);
@@ -340,6 +332,9 @@ function renderSplitOptions() {
             console.log("OK:", v);
           }
           splitPagesInput.value = value; //reinput the valid values back to  input
+          if (value.length != 0) {
+            document.getElementsByClassName("process-btn")[0].disabled=false;
+          }
         }
       });
     } else {
@@ -378,6 +373,7 @@ function renderEncryptOptions() {
   encryptPasswordreInput.addEventListener("change", function () {
     if (psswrd != this.value) {
       alert("Password do not match");
+      document.getElementsByClassName("process-btn")[0].disabled=true;
       passwordNotMatch.style.display = "block";
 
       password = null;
@@ -385,6 +381,7 @@ function renderEncryptOptions() {
       password = psswrd;
       console.log("Password match");
       passwordNotMatch.style.display = "none";
+      document.getElementsByClassName("process-btn")[0].disabled=false;
     }
   });
 }
@@ -403,6 +400,7 @@ function renderDecryptOptions() {
   const decryptPasswordInput = document.getElementById("decryptPassword");
   decryptPasswordInput.addEventListener("change", function () {
     password = this.value;
+    document.getElementsByClassName("process-btn")[0].disabled=false;
     console.log(password);
   });
 }
@@ -468,11 +466,15 @@ function renderWatermarkOptions() {
   watermarkPageNo.addEventListener("change", function () {
     if (this.checked) {
       value = "<pg>";  //set value to page no if pageno is choosen
+      
       watermarkText.style.display = "none";
     } else {
       value = null;
       watermarkText.style.display = "block";
     
+    }
+    if (type != null && value != null) {
+      document.getElementsByClassName("process-btn")[0].disabled=false;
     }
     
   
@@ -508,6 +510,7 @@ type='a'
     type = this.value;
     console.log(type);
     if (this.value === "c") {  //if value is custom then show input
+      document.getElementsByClassName("process-btn")[0].disabled=false;
       imagePagesInput.style.display = "block";
       console.log("image");
       imagePagesInput.addEventListener("change", function () {
@@ -532,6 +535,9 @@ type='a'
           imagePagesInput.value = value;
         }
       });
+      if (value.length != 0) {
+        document.getElementsByClassName("process-btn")[0].disabled=false;
+      }
     } else {
       value = null;
       imagePagesInput.style.display = "none"; //hide value input
