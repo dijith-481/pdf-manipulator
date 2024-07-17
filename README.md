@@ -3,6 +3,9 @@
 This repository contains a  PDF manipulator tool and website designed to do various PDF operations. 
 Created with Flask PyMuPDF
 
+
+    #### Video Demo:  https://youtu.be/qyKWyEYmvpk?si=Cew8cnrARntcvD83
+
 ## Functionality
 
 This provides the following functionalities:
@@ -46,7 +49,7 @@ pip install  Flask Flask-Session Werkzeug PyMuPDF Flask-APScheduler
 Detailed instructions on using the tool.
 
 Tool can either be used on the project website or as a command line toll by importing respective pdf manipulation functions.
-each names as [action]_pdf().
+each names as (action)_pdf().
 
 Website is a single page Application that  offers Upload Option  with any selected action.
 /Upload of flask recieves it and save securely at temp folder and returns page details including total pages.
