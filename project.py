@@ -83,7 +83,7 @@ def download_fileSendAsFile(filename):
     if os.path.isdir(os.path.join(app.config['TEMP_FOLDER'], filename)):
             directory_path = os.path.join(app.config['TEMP_FOLDER'], filename)
             if not os.path.isdir(directory_path):
-                return jsonify({'success': False, 'error': 'Directory not found'}), 404
+                return'directory not found', 404
                 
     
         
@@ -196,7 +196,7 @@ def download_file(filename,action):
             try:
                 return {
                     'success': True,
-                    'directory_name': f"{action}",
+                    'directory_name': filename,
                     'files': files_data
                 }
             except:

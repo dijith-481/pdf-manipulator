@@ -332,7 +332,7 @@ function renderSplitOptions() {
             console.log("OK:", v);
           }
           splitPagesInput.value = value; //reinput the valid values back to  input
-          if (value.length != 0) {
+          if (value != null) {
             document.getElementsByClassName("process-btn")[0].disabled=false;
           }
         }
@@ -535,7 +535,7 @@ type='a'
           imagePagesInput.value = value;
         }
       });
-      if (value.length != 0) {
+      if (value != null) {
         document.getElementsByClassName("process-btn")[0].disabled=false;
       }
     } else {
